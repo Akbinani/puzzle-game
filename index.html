@@ -32,15 +32,26 @@
     <script>
         function revealPrize() {
             let prizes = [
-                "₹50 Off on Almonds", 
-                "10% Off on Your Next Purchase", 
-                "₹100 Off on ₹500 Purchase", 
+                "Try Again!",
+                "Better Luck Next Time",
+                "₹50 Off on buying any 3 Kairava Products", 
+                "10% Off on Samyang Noodles", 
                 "Try Again!", 
-                "Buy 1 Get 1 Free on Walnuts"
+                "₹100 Off on ₹1500 Purchase", 
+                "Try Again!", 
+                "Better Luck Next Time"
             ];
             let randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
-            document.getElementById("prize-box").innerText = randomPrize;
-            document.getElementById("prize-box").style.backgroundColor = "#FFD700"; // Gold color
+            let box = document.getElementById("prize-box");
+
+            box.innerText = randomPrize;
+            box.style.backgroundColor = "#FFD700"; // Gold color
+
+            // Hide after 3 seconds and reset
+            setTimeout(() => {
+                box.innerText = "Tap Here";
+                box.style.backgroundColor = "#f4f4f4"; // Reset color
+            }, 3000);
         }
     </script>
 </body>
