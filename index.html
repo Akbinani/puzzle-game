@@ -3,54 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tap to Reveal</title>
+    <title>Puzzle Game</title>
     <style>
         body {
             text-align: center;
             font-family: Arial, sans-serif;
         }
-        #prize-box {
-            width: 300px;
-            height: 150px;
-            background-color: #f4f4f4;
-            border: 2px solid #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            margin: 20px auto;
+            width: 320px;
+        }
+        .piece {
+            width: 100px;
+            height: 100px;
+            background-size: 300px 300px;
+            cursor: pointer;
+            border: 1px solid #000;
+        }
+        #message {
             font-size: 20px;
             font-weight: bold;
-            cursor: pointer;
-            margin: 50px auto;
-            user-select: none;
+            margin-top: 20px;
+            color: green;
+        }
+        #timer {
+            font-size: 18px;
+            font-weight: bold;
+            color: red;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <h2>Tap the Box to Reveal Your Prize!</h2>
-    <div id="prize-box" onclick="revealPrize()">Tap Here</div>
+    <h2>Rearrange the Puzzle to Win!</h2>
+    <div id="timer">Time Left: 20s</div>
+    <div class="puzzle-container" id="puzzle"></div>
+    <p id="message"></p>
 
     <script>
-        function revealPrize() {
-            let prizes = [
-                "₹20 Off on Samyang Noodles", 
-                "Better Luck Next Time!",
-                "20% Off on Kairava Products", 
-                "₹100 Off on ₹1500 Purchase", 
-                "Try Again!", 
-                "₹20 Chocolate free"
-            ];
-            let randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
-            let box = document.getElementById("prize-box");
+        const imageURL = "your-image-url.jpg"; // Replace with your uploaded image link
+        let pieces = [];
+        let shuffledPieces = [];
+        let timeLeft = 20; // Time limit in seconds
+        let timerInterval;
 
-            box.innerText = randomPrize;
-            box.style.backgroundColor = "#FFD700"; // Gold color
+        function startTimer() {
+            document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
 
-            // Hide after 2 seconds and reset
-            setTimeout(() => {
-                box.innerText = "Tap Here";
-                box.style.backgroundColor = "#f4f4f4"; // Reset color
-            }, 3000);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById("message").innerText = "Time’s Up! Try Again!";
+                    setTimeout(createPuzzle, 2000); // Reset the puzzle after 2 seconds
+                }
+            }, 1000);
         }
+
+        function createPuzzle() {
+            clearInterval(timerInterval);
+            timeLeft = 20; // Reset time
+            startTimer();
+
+            let container = document.getElementById("puzzle");
+            container.innerHTML = "";
+            document.getElementById("message").innerText = "";
+
+            pieces = [];
+            for (let i = 0; i < 9; i++) {
+                let piece = document.createElement("div");
+                piece.classList.add("piece");
+                piece.style.backgroundImage = `url(${imageURL})`;
+                piece.style.backgroundPosition = `-${(i % 3) * 100}px -${Math.floor(i / 3) * 100}px`;
+                piece.setAttribute("data-index", i);
+                pieces.push(piece);
+            }
+
+            shuffledPieces = [...pieces].sort(() => Math.random() - 0.5);
+            shuffledPieces.forEach(piece => container.appendChild(piece));
+            makeDraggable();
+        }
+
+        function makeDraggable() {
+            let dragged = null;
+
+            document.querySelectorAll(".piece").forEach(piece => {
+                piece.draggable = true;
+
+                piece.addEventListener("dragstart", function() {
+                    dragged = this;
+                });
+
+                piece.addEventListener("dragover", function(event) {
+                    event.preventDefault();
+                });
+
+                piece.addEventListener("drop", function() {
+                    if (dragged !== this) {
+                        let parent = this.parentNode;
+                        let sibling = this.nextSibling === dragged ? this : this.nextSibling;
+                        parent.insertBefore(dragged, this);
+                        parent.insertBefore(this, sibling);
+                        checkWin();
+                    }
+                });
+            });
+        }
+
+        function checkWin() {
+            let currentOrder = [...document.querySelectorAll(".piece")].map(piece => piece.getAttribute("data-index"));
+            let correctOrder = pieces.map(piece => piece.getAttribute("data-index"));
+
+            if (JSON.stringify(currentOrder) === JSON.stringify(correctOrder)) {
+                clearInterval(timerInterval);
+                document.getElementById("message").innerText = "Congratulations! You Won!";
+            }
+        }
+
+        createPuzzle();
     </script>
 </body>
 </html>
