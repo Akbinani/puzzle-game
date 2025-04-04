@@ -40,7 +40,7 @@
 </head>
 <body>
     <h2>Rearrange the Puzzle to Win!</h2>
-    <div id="timer">Time Left: 20s</div>
+    <div id="timer">Time Left: 30s</div>
     <div class="puzzle-container" id="puzzle"></div>
     <p id="message"></p>
 
@@ -67,7 +67,7 @@
 
         function createPuzzle() {
             clearInterval(timerInterval);
-            timeLeft = 20; // Reset time
+            timeLeft = 30; // Reset time
             startTimer();
 
             let container = document.getElementById("puzzle");
