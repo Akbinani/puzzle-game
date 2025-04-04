@@ -6,7 +6,7 @@
     <title>Puzzle Game</title>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
-        canvas { border: 2px solid black; }
+        canvas { border: 2px solid black; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -16,34 +16,39 @@
         const canvas = document.getElementById("puzzleCanvas");
         const ctx = canvas.getContext("2d");
         const img = new Image();
-        img.src = "https://chat.openai.com/mnt/data/Pariwar%20Logo%201.png";
+        img.crossOrigin = "anonymous";
+        img.src = "https://cdn.jsdelivr.net/gh/kairava/assetcdn@main/Pariwar-Logo.png"; // Using your uploaded logo
+
         const gridSize = 3;
         let pieces = [];
-        let tileSize = canvas.width / gridSize;
-        let showOriginal = true;
+        const tileSize = canvas.width / gridSize;
 
         img.onload = () => {
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            setTimeout(scramblePuzzle, 3000); // Show original image for 3 seconds
+            setTimeout(() => {
+                scramblePuzzle();
+                drawPuzzle();
+            }, 3000); // Show original for 3 seconds
         };
 
         function scramblePuzzle() {
-            showOriginal = false;
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    pieces.push({ x: i * tileSize, y: j * tileSize });
+            pieces = [];
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    pieces.push({ x: x * tileSize, y: y * tileSize });
                 }
             }
             pieces.sort(() => Math.random() - 0.5);
-            drawPuzzle();
         }
 
         function drawPuzzle() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let i = 0; i < pieces.length; i++) {
-                let piece = pieces[i];
-                ctx.drawImage(img, piece.x, piece.y, tileSize, tileSize, 
-                              (i % gridSize) * tileSize, Math.floor(i / gridSize) * tileSize, tileSize, tileSize);
+                const sx = pieces[i].x;
+                const sy = pieces[i].y;
+                const dx = (i % gridSize) * tileSize;
+                const dy = Math.floor(i / gridSize) * tileSize;
+                ctx.drawImage(img, sx, sy, tileSize, tileSize, dx, dy, tileSize, tileSize);
             }
         }
     </script>
