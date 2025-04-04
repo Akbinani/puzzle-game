@@ -5,127 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puzzle Game</title>
     <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        .puzzle-container {
-            display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
-            gap: 5px;
-            margin: 20px auto;
-            width: 320px;
-        }
-        .piece {
-            width: 100px;
-            height: 100px;
-            background-size: 300px 300px;
-            cursor: pointer;
-            border: 1px solid #000;
-        }
-        #message {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 20px;
-            color: green;
-        }
-        #timer {
-            font-size: 18px;
-            font-weight: bold;
-            color: red;
-            margin-top: 10px;
-        }
+        body { text-align: center; font-family: Arial, sans-serif; }
+        canvas { border: 2px solid black; }
     </style>
 </head>
 <body>
-    <h2>Rearrange the Puzzle to Win!</h2>
-    <div id="timer">Time Left: 30s</div>
-    <div class="puzzle-container" id="puzzle"></div>
-    <p id="message"></p>
-
+    <h2>Rearrange the Puzzle</h2>
+    <canvas id="puzzleCanvas" width="400" height="400"></canvas>
     <script>
-        const imageURL = "https://i.postimg.cc/c4GWSWbM/Pariwar-Logo-1.png"; // Replace with your uploaded image link
+        const canvas = document.getElementById("puzzleCanvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.src = "Pariwar-Logo-1.png";  // Replace with your actual image URL
+        const gridSize = 3;
         let pieces = [];
-        let shuffledPieces = [];
-        let timeLeft = 20; // Time limit in seconds
-        let timerInterval;
+        let tileSize = canvas.width / gridSize;
+        let showOriginal = true;
 
-        function startTimer() {
-            document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            setTimeout(scramblePuzzle, 3000); // Show original image for 3 seconds
+        };
 
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    document.getElementById("message").innerText = "Time’s Up! Try Again!";
-                    setTimeout(createPuzzle, 2000); // Reset the puzzle after 2 seconds
+        function scramblePuzzle() {
+            showOriginal = false;
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    pieces.push({ x: i * tileSize, y: j * tileSize });
                 }
-            }, 1000);
-        }
-
-        function createPuzzle() {
-            clearInterval(timerInterval);
-            timeLeft = 30; // Reset time
-            startTimer();
-
-            let container = document.getElementById("puzzle");
-            container.innerHTML = "";
-            document.getElementById("message").innerText = "";
-
-            pieces = [];
-            for (let i = 0; i < 9; i++) {
-                let piece = document.createElement("div");
-                piece.classList.add("piece");
-                piece.style.backgroundImage = `url(${imageURL})`;
-                piece.style.backgroundPosition = `-${(i % 3) * 100}px -${Math.floor(i / 3) * 100}px`;
-                piece.setAttribute("data-index", i);
-                pieces.push(piece);
             }
-
-            shuffledPieces = [...pieces].sort(() => Math.random() - 0.5);
-            shuffledPieces.forEach(piece => container.appendChild(piece));
-            makeDraggable();
+            pieces.sort(() => Math.random() - 0.5);
+            drawPuzzle();
         }
 
-        function makeDraggable() {
-            let dragged = null;
-
-            document.querySelectorAll(".piece").forEach(piece => {
-                piece.draggable = true;
-
-                piece.addEventListener("dragstart", function() {
-                    dragged = this;
-                });
-
-                piece.addEventListener("dragover", function(event) {
-                    event.preventDefault();
-                });
-
-                piece.addEventListener("drop", function() {
-                    if (dragged !== this) {
-                        let parent = this.parentNode;
-                        let sibling = this.nextSibling === dragged ? this : this.nextSibling;
-                        parent.insertBefore(dragged, this);
-                        parent.insertBefore(this, sibling);
-                        checkWin();
-                    }
-                });
-            });
-        }
-
-        function checkWin() {
-            let currentOrder = [...document.querySelectorAll(".piece")].map(piece => piece.getAttribute("data-index"));
-            let correctOrder = pieces.map(piece => piece.getAttribute("data-index"));
-
-            if (JSON.stringify(currentOrder) === JSON.stringify(correctOrder)) {
-                clearInterval(timerInterval);
-                document.getElementById("message").innerText = "Congratulations! You Won!";
+        function drawPuzzle() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < pieces.length; i++) {
+                let piece = pieces[i];
+                ctx.drawImage(img, piece.x, piece.y, tileSize, tileSize, 
+                              (i % gridSize) * tileSize, Math.floor(i / gridSize) * tileSize, tileSize, tileSize);
             }
         }
-
-        createPuzzle();
     </script>
 </body>
 </html>
