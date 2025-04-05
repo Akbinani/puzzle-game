@@ -1,23 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzle Game</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Pariwar Puzzle</title>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        canvas { border: 2px solid black; margin-top: 10px; }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid #333;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <h2>Rearrange the Puzzle</h2>
     <canvas id="puzzleCanvas" width="400" height="400"></canvas>
+
     <script>
         const canvas = document.getElementById("puzzleCanvas");
         const ctx = canvas.getContext("2d");
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = "https://cdn.jsdelivr.net/gh/kairava/assetcdn@main/Pariwar-Logo.png"; // Using your uploaded logo
+        img.src = "https://i.imgur.com/oBHHj0u.png"; // Hosted Pariwar logo
 
         const gridSize = 3;
         let pieces = [];
