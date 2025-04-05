@@ -1,63 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Pariwar Puzzle</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        canvas {
-            border: 2px solid #333;
-            margin-top: 10px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pariwar Puzzle</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin-top: 20px;
+    }
+    canvas {
+      border: 2px solid #333;
+    }
+  </style>
 </head>
 <body>
-    <h2>Rearrange the Puzzle</h2>
-    <canvas id="puzzleCanvas" width="400" height="400"></canvas>
+  <h2>Rearrange the Puzzle</h2>
+  <canvas id="puzzleCanvas" width="400" height="400"></canvas>
 
-    <script>
-        const canvas = document.getElementById("puzzleCanvas");
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = "https://i.ibb.co/6XjNqLt/Pariwar-Logo-1.png"; // Your hosted logo
+  <script>
+    const canvas = document.getElementById("puzzleCanvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = "https://i.ibb.co/6XjNqLt/Pariwar-Logo-1.png";
 
-        const gridSize = 3;
-        let pieces = [];
-        const tileSize = canvas.width / gridSize;
+    const gridSize = 3;
+    let pieces = [];
+    const tileSize = canvas.width / gridSize;
 
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            setTimeout(() => {
-                scramblePuzzle();
-                drawPuzzle();
-            }, 3000); // Show original for 3 seconds
-        };
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      setTimeout(() => {
+        scramblePuzzle();
+        drawPuzzle();
+      }, 3000);
+    };
 
-        function scramblePuzzle() {
-            pieces = [];
-            for (let y = 0; y < gridSize; y++) {
-                for (let x = 0; x < gridSize; x++) {
-                    pieces.push({ x: x * tileSize, y: y * tileSize });
-                }
-            }
-            pieces.sort(() => Math.random() - 0.5);
+    function scramblePuzzle() {
+      pieces = [];
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          pieces.push({ x: x * tileSize, y: y * tileSize });
         }
+      }
+      pieces.sort(() => Math.random() - 0.5);
+    }
 
-        function drawPuzzle() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < pieces.length; i++) {
-                const sx = pieces[i].x;
-                const sy = pieces[i].y;
-                const dx = (i % gridSize) * tileSize;
-                const dy = Math.floor(i / gridSize) * tileSize;
-                ctx.drawImage(img, sx, sy, tileSize, tileSize, dx, dy, tileSize, tileSize);
-            }
-        }
-    </script>
+    function drawPuzzle() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < pieces.length; i++) {
+        const sx = pieces[i].x;
+        const sy = pieces[i].y;
+        const dx = (i % gridSize) * tileSize;
+        const dy = Math.floor(i / gridSize) * tileSize;
+        ctx.drawImage(img, sx, sy, tileSize, tileSize, dx, dy, tileSize, tileSize);
+      }
+    }
+  </script>
 </body>
 </html>
