@@ -139,19 +139,42 @@
 
     function makeDraggable(el) {
       let offsetX, offsetY;
+
+      const startDrag = (x, y) => {
+        offsetX = x - el.offsetLeft;
+        offsetY = y - el.offsetTop;
+      };
+
+      const moveDrag = (x, y) => {
+        el.style.left = x - puzzle.offsetLeft - offsetX + "px";
+        el.style.top = y - puzzle.offsetTop - offsetY + "px";
+      };
+
+      const endDrag = () => {
+        checkCompletion(el);
+        document.onmousemove = null;
+        document.onmouseup = null;
+        document.ontouchmove = null;
+        document.ontouchend = null;
+      };
+
       el.onmousedown = function (e) {
         if (!draggingEnabled) return;
-        offsetX = e.offsetX;
-        offsetY = e.offsetY;
+        startDrag(e.pageX, e.pageY);
         document.onmousemove = function (e) {
-          el.style.left = e.pageX - puzzle.offsetLeft - offsetX + "px";
-          el.style.top = e.pageY - puzzle.offsetTop - offsetY + "px";
+          moveDrag(e.pageX, e.pageY);
         };
-        document.onmouseup = function () {
-          document.onmousemove = null;
-          document.onmouseup = null;
-          checkCompletion(el);
+        document.onmouseup = endDrag;
+      };
+
+      el.ontouchstart = function (e) {
+        if (!draggingEnabled) return;
+        const touch = e.touches[0];
+        startDrag(touch.pageX, touch.pageY);
+        document.ontouchmove = function (e) {
+          moveDrag(e.touches[0].pageX, e.touches[0].pageY);
         };
+        document.ontouchend = endDrag;
       };
     }
 
@@ -187,7 +210,7 @@
     }
 
     function startTimer() {
-      const timer = setInterval(() => {
+      timer = setInterval(() => {
         if (timeLeft <= 0) {
           clearInterval(timer);
           if (!completed) {
