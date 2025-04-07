@@ -34,16 +34,14 @@
     #puzzle {
       width: 300px;
       height: 300px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 2px;
       position: relative;
+      border: 3px dashed #333;
+      overflow: hidden;
       display: none;
     }
     .piece {
-      width: 98px;
-      height: 98px;
+      width: 100px;
+      height: 100px;
       background-size: 300px 300px;
       border: 1px solid #ccc;
       cursor: grab;
@@ -118,7 +116,7 @@
 
     function initPuzzle() {
       preview.style.display = "none";
-      puzzle.style.display = "grid";
+      puzzle.style.display = "block";
       draggingEnabled = true;
 
       positions.forEach((pos, i) => {
@@ -146,8 +144,10 @@
       };
 
       const moveDrag = (x, y) => {
-        el.style.left = x - puzzle.offsetLeft - offsetX + "px";
-        el.style.top = y - puzzle.offsetTop - offsetY + "px";
+        const newX = x - puzzle.offsetLeft - offsetX;
+        const newY = y - puzzle.offsetTop - offsetY;
+        el.style.left = `${Math.max(0, Math.min(newX, 200))}px`;
+        el.style.top = `${Math.max(0, Math.min(newY, 200))}px`;
       };
 
       const endDrag = () => {
