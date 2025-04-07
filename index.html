@@ -69,7 +69,7 @@
   <h1>Complete the Puzzle!</h1>
   <div id="timer">Time Left: <span id="countdown">30</span>s</div>
   <div id="puzzle"></div>
-  <div id="message">🎉 Puzzle Completed! You’ve unlocked a reward! 🎁</div>
+  <div id="message"></div>
   <div id="timeout-message">⏰ Time's up! Try again. 🕒</div>
 
   <script>
@@ -141,10 +141,15 @@
           }
         }
       });
+
       if (correct === 9 && !completed) {
         completed = true;
-        completeMessage.style.display = "block";
         clearInterval(timer);
+        let reward = 100;
+        if (timeLeft > 20) reward = 300;
+        else if (timeLeft > 10) reward = 200;
+        completeMessage.textContent = `🎉 Puzzle Completed in ${30 - timeLeft}s! You’ve won ₹${reward}! 🎁`;
+        completeMessage.style.display = "block";
       }
     }
 
