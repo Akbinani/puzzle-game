@@ -2,59 +2,149 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pariwar Puzzle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pariwar Logo Puzzle</title>
   <style>
     body {
-      text-align: center;
       font-family: Arial, sans-serif;
-      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+      overflow: hidden;
     }
-    canvas {
-      border: 2px solid #333;
+    h1 {
+      margin-bottom: 20px;
+    }
+    #puzzle {
+      width: 450px;
+      height: 450px;
+      position: relative;
+      border: 2px solid #444;
+    }
+    .piece {
+      width: 148px;
+      height: 148px;
+      background-size: 450px 450px;
+      border: 1px solid #ccc;
+      cursor: grab;
+      position: absolute;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 24px;
+      color: green;
+      display: none;
+    }
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      position: absolute;
+      border-radius: 50%;
+      animation: fall 3s linear infinite;
+    }
+    @keyframes fall {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(100vh); opacity: 0; }
     }
   </style>
 </head>
 <body>
-  <h2>Rearrange the Puzzle</h2>
-  <canvas id="puzzleCanvas" width="400" height="400"></canvas>
+  <h1>Complete the Puzzle!</h1>
+  <div id="puzzle"></div>
+  <div id="message">🎉 DONE 🎉</div>
+  <div class="confetti" id="confetti"></div>
 
   <script>
-    const canvas = document.getElementById("puzzleCanvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = "https://github.com/Akbinani/puzzle-game/raw/main/Pariwar%20Logo%201.png"; // ✅ Working Logo
+    const positions = [];
     const gridSize = 3;
-    let pieces = [];
-    const tileSize = canvas.width / gridSize;
-
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      setTimeout(() => {
-        scramblePuzzle();
-        drawPuzzle();
-      }, 3000);
-    };
-
-    function scramblePuzzle() {
-      pieces = [];
-      for (let y = 0; y < gridSize; y++) {
-        for (let x = 0; x < gridSize; x++) {
-          pieces.push({ x: x * tileSize, y: y * tileSize });
-        }
+    const tileSize = 150;
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        positions.push({ x: x * tileSize, y: y * tileSize });
       }
-      pieces.sort(() => Math.random() - 0.5);
     }
 
-    function drawPuzzle() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let i = 0; i < pieces.length; i++) {
-        const sx = pieces[i].x;
-        const sy = pieces[i].y;
-        const dx = (i % gridSize) * tileSize;
-        const dy = Math.floor(i / gridSize) * tileSize;
-        ctx.drawImage(img, sx, sy, tileSize, tileSize, dx, dy, tileSize, tileSize);
+    const puzzle = document.getElementById("puzzle");
+    const logoURL = "Pariwar Logo 1.png"; // Should be in same directory
+
+    let pieces = [];
+    positions.forEach((pos, i) => {
+      const div = document.createElement("div");
+      div.className = "piece";
+      div.style.backgroundImage = `url('${logoURL}')`;
+      div.style.backgroundPosition = `-${pos.x}px -${pos.y}px`;
+      div.dataset.correctIndex = i;
+
+      // Shuffle position
+      const randomX = Math.random() * 300;
+      const randomY = Math.random() * 300;
+      div.style.left = `${randomX}px`;
+      div.style.top = `${randomY}px`;
+
+      makeDraggable(div);
+      pieces.push(div);
+      puzzle.appendChild(div);
+    });
+
+    function makeDraggable(el) {
+      let offsetX, offsetY;
+      el.onmousedown = function (e) {
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+        document.onmousemove = function (e) {
+          el.style.left = e.pageX - puzzle.offsetLeft - offsetX + "px";
+          el.style.top = e.pageY - puzzle.offsetTop - offsetY + "px";
+        };
+        document.onmouseup = function () {
+          document.onmousemove = null;
+          document.onmouseup = null;
+          checkCompletion();
+        };
+      };
+    }
+
+    function checkCompletion() {
+      let correct = 0;
+      pieces.forEach((piece, i) => {
+        const expected = positions[i];
+        const currentX = parseInt(piece.style.left);
+        const currentY = parseInt(piece.style.top);
+        const dx = Math.abs(currentX - expected.x);
+        const dy = Math.abs(currentY - expected.y);
+        if (dx < 20 && dy < 20) {
+          correct++;
+          piece.style.left = expected.x + "px";
+          piece.style.top = expected.y + "px";
+        }
+      });
+      if (correct === pieces.length) {
+        document.getElementById("message").style.display = "block";
+        showConfetti();
+      }
+    }
+
+    function showConfetti() {
+      const confetti = document.getElementById("confetti");
+      for (let i = 0; i < 100; i++) {
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        dot.style.left = Math.random() * window.innerWidth + "px";
+        dot.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        dot.style.animationDuration = `${2 + Math.random() * 3}s`;
+        confetti.appendChild(dot);
+        setTimeout(() => confetti.removeChild(dot), 3000);
       }
     }
   </script>
