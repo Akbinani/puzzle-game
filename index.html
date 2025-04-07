@@ -22,6 +22,14 @@
       color: #e74c3c;
       margin-bottom: 20px;
     }
+    #preview {
+      width: 300px;
+      height: 300px;
+      background-image: url('Pariwar Logo 1.png');
+      background-size: cover;
+      margin-bottom: 20px;
+      border: 3px solid #444;
+    }
     #puzzle {
       width: 300px;
       height: 300px;
@@ -30,6 +38,7 @@
       grid-template-rows: repeat(3, 1fr);
       gap: 2px;
       position: relative;
+      display: none;
     }
     .piece {
       width: 98px;
@@ -63,25 +72,42 @@
       color: red;
       display: none;
     }
+    #retry-button {
+      display: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
   <h1>Complete the Puzzle!</h1>
   <div id="timer">Time Left: <span id="countdown">30</span>s</div>
+  <div id="preview"></div>
   <div id="puzzle"></div>
   <div id="message"></div>
   <div id="timeout-message">⏰ Time's up! Try again. 🕒</div>
+  <button id="retry-button">🔁 Retry</button>
 
   <script>
     const puzzle = document.getElementById("puzzle");
-    const logoURL = "Pariwar Logo 1.png"; // Should be in same directory
+    const preview = document.getElementById("preview");
+    const logoURL = "Pariwar Logo 1.png";
     const countdownEl = document.getElementById("countdown");
     const timeoutMessage = document.getElementById("timeout-message");
     const completeMessage = document.getElementById("message");
+    const retryButton = document.getElementById("retry-button");
 
     let positions = [];
     let pieces = [];
     let completed = false;
+    let timeLeft = 30;
+    let draggingEnabled = false;
 
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 3; col++) {
@@ -89,20 +115,26 @@
       }
     }
 
-    positions.forEach((pos, i) => {
-      const div = document.createElement("div");
-      div.className = "piece";
-      div.style.backgroundImage = `url('${logoURL}')`;
-      div.style.backgroundPosition = `-${pos.x}px -${pos.y}px`;
-      div.dataset.correctIndex = i;
-      div.style.left = `${Math.random() * 200}px`;
-      div.style.top = `${Math.random() * 200}px`;
-      makeDraggable(div);
-      pieces.push(div);
-      puzzle.appendChild(div);
-    });
+    function initPuzzle() {
+      preview.style.display = "none";
+      puzzle.style.display = "grid";
+      draggingEnabled = true;
 
-    let draggingEnabled = true;
+      positions.forEach((pos, i) => {
+        const div = document.createElement("div");
+        div.className = "piece";
+        div.style.backgroundImage = `url('${logoURL}')`;
+        div.style.backgroundPosition = `-${pos.x}px -${pos.y}px`;
+        div.dataset.correctIndex = i;
+        div.style.left = `${Math.random() * 200}px`;
+        div.style.top = `${Math.random() * 200}px`;
+        makeDraggable(div);
+        pieces.push(div);
+        puzzle.appendChild(div);
+      });
+
+      startTimer();
+    }
 
     function makeDraggable(el) {
       let offsetX, offsetY;
@@ -153,19 +185,27 @@
       }
     }
 
-    // 30-sec timer
-    let timeLeft = 30;
-    const timer = setInterval(() => {
-      if (timeLeft <= 0) {
-        clearInterval(timer);
-        if (!completed) {
-          timeoutMessage.style.display = "block";
-          draggingEnabled = false;
+    function startTimer() {
+      const timer = setInterval(() => {
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          if (!completed) {
+            timeoutMessage.style.display = "block";
+            retryButton.style.display = "inline-block";
+            draggingEnabled = false;
+          }
+        } else {
+          countdownEl.textContent = --timeLeft;
         }
-      } else {
-        countdownEl.textContent = --timeLeft;
-      }
-    }, 1000);
+      }, 1000);
+    }
+
+    retryButton.addEventListener("click", () => {
+      location.reload();
+    });
+
+    // Show preview for 3 seconds, then start game
+    setTimeout(initPuzzle, 3000);
   </script>
 </body>
 </html>
