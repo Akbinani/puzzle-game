@@ -26,8 +26,8 @@
     #preview {
       width: 300px;
       height: 300px;
-      background-image: url('Pariwar Logo 1.png');
       background-size: cover;
+      background-repeat: no-repeat;
       margin-bottom: 20px;
       border: 3px solid #444;
     }
@@ -38,6 +38,7 @@
       border: 3px dashed #333;
       overflow: hidden;
       display: none;
+      touch-action: none;
     }
     .piece {
       width: 100px;
@@ -47,6 +48,7 @@
       cursor: grab;
       position: absolute;
       transition: transform 0.2s;
+      z-index: 10;
     }
     .shake {
       animation: shake 0.3s;
@@ -96,7 +98,7 @@
   <script>
     const puzzle = document.getElementById("puzzle");
     const preview = document.getElementById("preview");
-    const logoURL = "Pariwar Logo 1.png";
+    const logoURL = "Logo.png"; // Make sure the file name has no spaces and matches your file
     const countdownEl = document.getElementById("countdown");
     const timeoutMessage = document.getElementById("timeout-message");
     const completeMessage = document.getElementById("message");
@@ -106,7 +108,11 @@
     let pieces = [];
     let completed = false;
     let timeLeft = 30;
+    let timer;
     let draggingEnabled = false;
+
+    // Load preview background image
+    preview.style.backgroundImage = `url('${logoURL}')`;
 
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 3; col++) {
@@ -139,13 +145,15 @@
       let offsetX, offsetY;
 
       const startDrag = (x, y) => {
-        offsetX = x - el.offsetLeft;
-        offsetY = y - el.offsetTop;
+        const rect = el.getBoundingClientRect();
+        offsetX = x - rect.left;
+        offsetY = y - rect.top;
       };
 
       const moveDrag = (x, y) => {
-        const newX = x - puzzle.offsetLeft - offsetX;
-        const newY = y - puzzle.offsetTop - offsetY;
+        const rect = puzzle.getBoundingClientRect();
+        const newX = x - rect.left - offsetX;
+        const newY = y - rect.top - offsetY;
         el.style.left = `${Math.max(0, Math.min(newX, 200))}px`;
         el.style.top = `${Math.max(0, Math.min(newY, 200))}px`;
       };
