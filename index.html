@@ -13,94 +13,101 @@
       background-color: #f0f0f0;
       margin: 0;
       padding: 20px;
-      overflow: hidden;
     }
     h1 {
+      margin-bottom: 10px;
+    }
+    #timer {
+      font-size: 18px;
+      color: #e74c3c;
       margin-bottom: 20px;
     }
     #puzzle {
-      width: 450px;
-      height: 450px;
+      width: 300px;
+      height: 300px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 2px;
       position: relative;
-      border: 2px solid #444;
     }
     .piece {
-      width: 148px;
-      height: 148px;
-      background-size: 450px 450px;
+      width: 98px;
+      height: 98px;
+      background-size: 300px 300px;
       border: 1px solid #ccc;
       cursor: grab;
       position: absolute;
+      transition: transform 0.2s;
+    }
+    .shake {
+      animation: shake 0.3s;
+    }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      20% { transform: translate(-1px, -2px) rotate(-1deg); }
+      40% { transform: translate(-3px, 0px) rotate(1deg); }
+      60% { transform: translate(3px, 2px) rotate(0deg); }
+      80% { transform: translate(1px, -1px) rotate(1deg); }
+      100% { transform: translate(-1px, 2px) rotate(-1deg); }
     }
     #message {
       margin-top: 20px;
-      font-size: 24px;
+      font-size: 20px;
       color: green;
       display: none;
     }
-    .confetti {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .dot {
-      width: 10px;
-      height: 10px;
-      position: absolute;
-      border-radius: 50%;
-      animation: fall 3s linear infinite;
-    }
-    @keyframes fall {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(100vh); opacity: 0; }
+    #timeout-message {
+      margin-top: 20px;
+      font-size: 20px;
+      color: red;
+      display: none;
     }
   </style>
 </head>
 <body>
   <h1>Complete the Puzzle!</h1>
+  <div id="timer">Time Left: <span id="countdown">30</span>s</div>
   <div id="puzzle"></div>
-  <div id="message">🎉 DONE 🎉</div>
-  <div class="confetti" id="confetti"></div>
+  <div id="message">🎉 Puzzle Completed! You’ve unlocked a reward! 🎁</div>
+  <div id="timeout-message">⏰ Time's up! Try again. 🕒</div>
 
   <script>
-    const positions = [];
-    const gridSize = 3;
-    const tileSize = 150;
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
-        positions.push({ x: x * tileSize, y: y * tileSize });
+    const puzzle = document.getElementById("puzzle");
+    const logoURL = "Pariwar Logo 1.png"; // Should be in same directory
+    const countdownEl = document.getElementById("countdown");
+    const timeoutMessage = document.getElementById("timeout-message");
+    const completeMessage = document.getElementById("message");
+
+    let positions = [];
+    let pieces = [];
+    let completed = false;
+
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        positions.push({ x: col * 100, y: row * 100 });
       }
     }
 
-    const puzzle = document.getElementById("puzzle");
-    const logoURL = "Pariwar Logo 1.png"; // Should be in same directory
-
-    let pieces = [];
     positions.forEach((pos, i) => {
       const div = document.createElement("div");
       div.className = "piece";
       div.style.backgroundImage = `url('${logoURL}')`;
       div.style.backgroundPosition = `-${pos.x}px -${pos.y}px`;
       div.dataset.correctIndex = i;
-
-      // Shuffle position
-      const randomX = Math.random() * 300;
-      const randomY = Math.random() * 300;
-      div.style.left = `${randomX}px`;
-      div.style.top = `${randomY}px`;
-
+      div.style.left = `${Math.random() * 200}px`;
+      div.style.top = `${Math.random() * 200}px`;
       makeDraggable(div);
       pieces.push(div);
       puzzle.appendChild(div);
     });
 
+    let draggingEnabled = true;
+
     function makeDraggable(el) {
       let offsetX, offsetY;
       el.onmousedown = function (e) {
+        if (!draggingEnabled) return;
         offsetX = e.offsetX;
         offsetY = e.offsetY;
         document.onmousemove = function (e) {
@@ -110,12 +117,12 @@
         document.onmouseup = function () {
           document.onmousemove = null;
           document.onmouseup = null;
-          checkCompletion();
+          checkCompletion(el);
         };
       };
     }
 
-    function checkCompletion() {
+    function checkCompletion(currentPiece) {
       let correct = 0;
       pieces.forEach((piece, i) => {
         const expected = positions[i];
@@ -127,26 +134,33 @@
           correct++;
           piece.style.left = expected.x + "px";
           piece.style.top = expected.y + "px";
+        } else {
+          if (piece === currentPiece) {
+            piece.classList.add("shake");
+            setTimeout(() => piece.classList.remove("shake"), 300);
+          }
         }
       });
-      if (correct === pieces.length) {
-        document.getElementById("message").style.display = "block";
-        showConfetti();
+      if (correct === 9 && !completed) {
+        completed = true;
+        completeMessage.style.display = "block";
+        clearInterval(timer);
       }
     }
 
-    function showConfetti() {
-      const confetti = document.getElementById("confetti");
-      for (let i = 0; i < 100; i++) {
-        const dot = document.createElement("div");
-        dot.className = "dot";
-        dot.style.left = Math.random() * window.innerWidth + "px";
-        dot.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-        dot.style.animationDuration = `${2 + Math.random() * 3}s`;
-        confetti.appendChild(dot);
-        setTimeout(() => confetti.removeChild(dot), 3000);
+    // 30-sec timer
+    let timeLeft = 30;
+    const timer = setInterval(() => {
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        if (!completed) {
+          timeoutMessage.style.display = "block";
+          draggingEnabled = false;
+        }
+      } else {
+        countdownEl.textContent = --timeLeft;
       }
-    }
+    }, 1000);
   </script>
 </body>
 </html>
