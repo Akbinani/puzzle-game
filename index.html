@@ -98,7 +98,7 @@
   <script>
     const puzzle = document.getElementById("puzzle");
     const preview = document.getElementById("preview");
-    const logoURL = "logo.png"; // Updated image filename
+    const logoURL = "logo.png"; // Updated logo file name
     const countdownEl = document.getElementById("countdown");
     const timeoutMessage = document.getElementById("timeout-message");
     const completeMessage = document.getElementById("message");
@@ -111,6 +111,7 @@
     let timer;
     let draggingEnabled = false;
 
+    // Load preview background image
     preview.style.backgroundImage = `url('${logoURL}')`;
 
     for (let row = 0; row < 3; row++) {
@@ -223,19 +224,4 @@
           if (!completed) {
             timeoutMessage.style.display = "block";
             retryButton.style.display = "inline-block";
-            draggingEnabled = false;
-          }
-        } else {
-          countdownEl.textContent = --timeLeft;
-        }
-      }, 1000);
-    }
-
-    retryButton.addEventListener("click", () => {
-      location.reload();
-    });
-
-    setTimeout(initPuzzle, 2000);
-  </script>
-</body>
-</html>
+            draggingEnabled = false
