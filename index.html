@@ -207,10 +207,10 @@
       if (correct === 9 && !completed) {
         completed = true;
         clearInterval(timer);
-        let reward = 100;
-        if (timeLeft > 20) reward = 300;
-        else if (timeLeft > 10) reward = 200;
-        completeMessage.textContent = `🎉 You’ve unlocked a surprise gift! 🎁 Visit our counter with this screen.`;
+        let reward = 50;
+        if (timeLeft > 20) reward = 200;
+        else if (timeLeft > 10) reward = 100;
+        completeMessage.textContent = `🎉 You won ₹${reward}! 🎁 Show this screen at the counter.`;
         completeMessage.style.display = "block";
         confetti({
           particleCount: 200,
@@ -235,6 +235,8 @@
       }, 1000);
     }
 
+    // Wait 2 seconds to preview image, then show puzzle
+    preview.style.display = "block";
     setTimeout(initPuzzle, 2000);
   </script>
 </body>
