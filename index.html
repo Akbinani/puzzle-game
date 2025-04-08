@@ -73,6 +73,11 @@
       color: red;
       display: none;
     }
+    #already-played-message {
+      margin-top: 30px;
+      font-size: 22px;
+      color: #555;
+    }
     canvas {
       position: absolute;
       pointer-events: none;
@@ -85,7 +90,8 @@
   <div id="preview"></div>
   <div id="puzzle"></div>
   <div id="message"></div>
-  <div id="timeout-message">⏰ Time's up! Try again. 🕒</div>
+  <div id="timeout-message">⏰ Time's up!</div>
+  <div id="already-played-message" style="display: none;">You’ve already played and claimed your prize!</div>
   <canvas id="confetti-canvas"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -96,6 +102,7 @@
     const countdownEl = document.getElementById("countdown");
     const timeoutMessage = document.getElementById("timeout-message");
     const completeMessage = document.getElementById("message");
+    const alreadyPlayedMessage = document.getElementById("already-played-message");
     const canvas = document.getElementById("confetti-canvas");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -113,6 +120,14 @@
       for (let col = 0; col < 3; col++) {
         positions.push({ x: col * 100, y: row * 100 });
       }
+    }
+
+    if (localStorage.getItem("playedPuzzle")) {
+      document.getElementById("timer").style.display = "none";
+      preview.style.display = "none";
+      alreadyPlayedMessage.style.display = "block";
+    } else {
+      setTimeout(initPuzzle, 2000);
     }
 
     function initPuzzle() {
@@ -207,6 +222,7 @@
       if (correct === 9 && !completed) {
         completed = true;
         clearInterval(timer);
+        localStorage.setItem("playedPuzzle", "yes");
         let reward = 50;
         if (timeLeft > 20) reward = 200;
         else if (timeLeft > 10) reward = 100;
@@ -225,6 +241,7 @@
         if (timeLeft <= 0) {
           clearInterval(timer);
           if (!completed) {
+            localStorage.setItem("playedPuzzle", "yes");
             timeoutMessage.style.display = "block";
             draggingEnabled = false;
             setTimeout(() => location.reload(), 2000);
@@ -234,10 +251,6 @@
         }
       }, 1000);
     }
-
-    // Wait 2 seconds to preview image, then show puzzle
-    preview.style.display = "block";
-    setTimeout(initPuzzle, 2000);
   </script>
 </body>
 </html>
