@@ -82,6 +82,12 @@
       position: absolute;
       pointer-events: none;
     }
+    #reset-button {
+      display: none;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -90,8 +96,9 @@
   <div id="preview"></div>
   <div id="puzzle"></div>
   <div id="message"></div>
-  <div id="timeout-message">⏰ Time's up!</div>
+  <div id="timeout-message">😢 Better luck next time!</div>
   <div id="already-played-message" style="display: none;">You’ve already played and claimed your prize!</div>
+  <button id="reset-button">🔁 Reset Game</button>
   <canvas id="confetti-canvas"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -103,6 +110,7 @@
     const timeoutMessage = document.getElementById("timeout-message");
     const completeMessage = document.getElementById("message");
     const alreadyPlayedMessage = document.getElementById("already-played-message");
+    const resetButton = document.getElementById("reset-button");
     const canvas = document.getElementById("confetti-canvas");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -122,7 +130,7 @@
       }
     }
 
-    if (localStorage.getItem("playedPuzzle")) {
+    if (localStorage.getItem("playedPuzzle") === "won") {
       document.getElementById("timer").style.display = "none";
       preview.style.display = "none";
       alreadyPlayedMessage.style.display = "block";
@@ -222,12 +230,13 @@
       if (correct === 9 && !completed) {
         completed = true;
         clearInterval(timer);
-        localStorage.setItem("playedPuzzle", "yes");
+        localStorage.setItem("playedPuzzle", "won");
         let reward = 50;
         if (timeLeft > 20) reward = 200;
         else if (timeLeft > 10) reward = 100;
         completeMessage.textContent = `🎉 You won ₹${reward}! 🎁 Show this screen at the counter.`;
         completeMessage.style.display = "block";
+        resetButton.style.display = "block";
         confetti({
           particleCount: 200,
           spread: 120,
@@ -241,16 +250,21 @@
         if (timeLeft <= 0) {
           clearInterval(timer);
           if (!completed) {
-            localStorage.setItem("playedPuzzle", "yes");
+            localStorage.setItem("playedPuzzle", "lost");
             timeoutMessage.style.display = "block";
             draggingEnabled = false;
-            setTimeout(() => location.reload(), 2000);
+            resetButton.style.display = "block";
           }
         } else {
           countdownEl.textContent = --timeLeft;
         }
       }, 1000);
     }
+
+    resetButton.onclick = () => {
+      localStorage.removeItem("playedPuzzle");
+      location.reload();
+    };
   </script>
 </body>
 </html>
