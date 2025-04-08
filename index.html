@@ -236,7 +236,7 @@
         else if (timeLeft > 10) reward = 100;
         completeMessage.textContent = `🎉 You won ₹${reward}! 🎁 Show this screen at the counter.`;
         completeMessage.style.display = "block";
-        resetButton.style.display = "block";
+        resetButton.style.display = "none";
         confetti({
           particleCount: 200,
           spread: 120,
