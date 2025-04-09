@@ -15,6 +15,9 @@
       margin: 0;
       padding: 20px;
     }
+    h1 {
+      margin-bottom: 10px;
+    }
     #timer {
       font-size: 18px;
       color: #e74c3c;
@@ -97,7 +100,6 @@
     } else if (played === "lost") {
       document.getElementById("timeout-message").style.display = "block";
     } else {
-      document.getElementById("timer").style.display = "block";
       document.getElementById("preview").style.backgroundImage = "url('logo.png')";
       setTimeout(startPuzzle, 2000);
     }
@@ -115,6 +117,8 @@
 
     function startPuzzle() {
       document.getElementById("preview").style.display = "none";
+      document.getElementById("timer").style.display = "block";
+
       const puzzle = document.getElementById("puzzle");
       const size = 3;
       const tileSize = 100;
@@ -138,7 +142,7 @@
         }
       }, 1000);
 
-      shuffled.forEach(({ x, y }, index) => {
+      shuffled.forEach(({ x, y }) => {
         const piece = document.createElement("div");
         piece.className = "piece";
         piece.style.backgroundImage = "url('logo.png')";
@@ -163,10 +167,8 @@
           const puzzleRect = puzzle.getBoundingClientRect();
           let newX = e.clientX - offsetX - puzzleRect.left;
           let newY = e.clientY - offsetY - puzzleRect.top;
-
           newX = Math.max(0, Math.min(newX, puzzle.clientWidth - tileSize));
           newY = Math.max(0, Math.min(newY, puzzle.clientHeight - tileSize));
-
           piece.style.left = `${newX}px`;
           piece.style.top = `${newY}px`;
         }
