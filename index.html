@@ -43,9 +43,8 @@
       height: 100px;
       background-size: 300px 300px;
       border: 1px solid #ccc;
-      cursor: grab;
       position: absolute;
-      transition: transform 0.2s;
+      touch-action: none;
       z-index: 10;
     }
     .shake {
@@ -137,8 +136,10 @@
         countdown.textContent = timeLeft;
         if (timeLeft === 0) {
           clearInterval(interval);
-          localStorage.setItem("playedPuzzle", "lost");
-          document.getElementById("timeout-message").style.display = "block";
+          if (correctCount < size * size) {
+            localStorage.setItem("playedPuzzle", "lost");
+            document.getElementById("timeout-message").style.display = "block";
+          }
         }
       }, 1000);
 
@@ -153,17 +154,41 @@
         piece.style.top = `${Math.random() * (300 - tileSize)}px`;
         puzzle.appendChild(piece);
 
-        piece.onmousedown = dragMouseDown;
         let offsetX, offsetY;
-        function dragMouseDown(e) {
-          e.preventDefault();
+
+        const onTouchStart = (e) => {
+          const touch = e.touches[0];
+          offsetX = touch.clientX - piece.offsetLeft;
+          offsetY = touch.clientY - piece.offsetTop;
+          document.ontouchmove = onTouchMove;
+          document.ontouchend = onTouchEnd;
+        };
+
+        const onTouchMove = (e) => {
+          const touch = e.touches[0];
+          const puzzleRect = puzzle.getBoundingClientRect();
+          let newX = touch.clientX - offsetX - puzzleRect.left;
+          let newY = touch.clientY - offsetY - puzzleRect.top;
+          newX = Math.max(0, Math.min(newX, puzzle.clientWidth - tileSize));
+          newY = Math.max(0, Math.min(newY, puzzle.clientHeight - tileSize));
+          piece.style.left = `${newX}px`;
+          piece.style.top = `${newY}px`;
+        };
+
+        const onTouchEnd = () => {
+          document.ontouchmove = null;
+          document.ontouchend = null;
+          checkPlacement();
+        };
+
+        const onMouseDown = (e) => {
           offsetX = e.clientX - piece.offsetLeft;
           offsetY = e.clientY - piece.offsetTop;
-          document.onmouseup = closeDrag;
-          document.onmousemove = drag;
-        }
-        function drag(e) {
-          e.preventDefault();
+          document.onmousemove = onMouseMove;
+          document.onmouseup = onMouseUp;
+        };
+
+        const onMouseMove = (e) => {
           const puzzleRect = puzzle.getBoundingClientRect();
           let newX = e.clientX - offsetX - puzzleRect.left;
           let newY = e.clientY - offsetY - puzzleRect.top;
@@ -171,16 +196,19 @@
           newY = Math.max(0, Math.min(newY, puzzle.clientHeight - tileSize));
           piece.style.left = `${newX}px`;
           piece.style.top = `${newY}px`;
-        }
-        function closeDrag() {
-          document.onmouseup = null;
-          document.onmousemove = null;
+        };
 
+        const onMouseUp = () => {
+          document.onmousemove = null;
+          document.onmouseup = null;
+          checkPlacement();
+        };
+
+        function checkPlacement() {
           const targetX = piece.dataset.correctX * tileSize;
           const targetY = piece.dataset.correctY * tileSize;
           const deltaX = Math.abs(piece.offsetLeft - targetX);
           const deltaY = Math.abs(piece.offsetTop - targetY);
-
           if (deltaX < 15 && deltaY < 15) {
             piece.style.left = `${targetX}px`;
             piece.style.top = `${targetY}px`;
@@ -196,6 +224,9 @@
             setTimeout(() => piece.classList.remove("shake"), 300);
           }
         }
+
+        piece.addEventListener("mousedown", onMouseDown);
+        piece.addEventListener("touchstart", onTouchStart);
       });
     }
   </script>
