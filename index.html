@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pariwar Puzzle Reward</title>
   <style>
     body {
@@ -22,6 +22,8 @@
       width: 300px;
       height: 300px;
       border: 3px solid #ccc;
+      box-sizing: border-box;
+      overflow: hidden;
     }
     .piece {
       position: absolute;
@@ -42,9 +44,15 @@
     }
     #message {
       font-size: 1.2em;
-      margin-top: 20px;
+      margin-top: 15px;
       font-weight: bold;
       text-align: center;
+    }
+    #timer {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #ff3333;
     }
     #confetti {
       position: fixed;
@@ -58,6 +66,7 @@
   </style>
 </head>
 <body>
+  <div id="timer">Time Left: 30s</div>
   <div id="puzzle-container"></div>
   <div id="message"></div>
   <canvas id="confetti"></canvas>
@@ -67,6 +76,7 @@
     const message = document.getElementById("message");
     const canvas = document.getElementById("confetti");
     const ctx = canvas.getContext("2d");
+    const timerDisplay = document.getElementById("timer");
     const size = 3;
     const tileSize = 100;
     let pieces = [];
@@ -74,6 +84,7 @@
     let occupiedGrid = Array(size).fill(null).map(() => Array(size).fill(null));
     let interval;
     let timeLeft = 30;
+    let gameOver = false;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -97,6 +108,9 @@
       occupiedGrid.forEach(row => row.fill(null));
       pieces = [];
       container.innerHTML = "";
+      message.textContent = "";
+      timerDisplay.textContent = `Time Left: ${timeLeft}s`;
+      gameOver = false;
 
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
@@ -116,8 +130,12 @@
       }
 
       interval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft === 0) {
+        if (timeLeft > 0) {
+          timeLeft--;
+          timerDisplay.textContent = `Time Left: ${timeLeft}s`;
+        }
+        if (timeLeft === 0 && !gameOver) {
+          gameOver = true;
           clearInterval(interval);
           message.textContent = "Better Luck Next Time!";
         }
@@ -178,7 +196,8 @@
         }
         occupiedGrid[correctY][correctX] = piece;
 
-        if (correctCount === size * size) {
+        if (correctCount === size * size && !gameOver) {
+          gameOver = true;
           clearInterval(interval);
           const reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
           showPrize(reward);
