@@ -15,9 +15,6 @@
       margin: 0;
       padding: 20px;
     }
-    h1 {
-      margin-bottom: 10px;
-    }
     #timer {
       font-size: 18px;
       color: #e74c3c;
@@ -66,8 +63,14 @@
     #already-played-message {
       color: #555;
     }
-    #timeout-message { color: red; }
-    #message { color: green; display: none; }
+    #timeout-message {
+      color: red;
+      display: none;
+    }
+    #message {
+      color: green;
+      display: none;
+    }
     canvas {
       position: absolute;
     }
@@ -75,17 +78,10 @@
       pointer-events: none;
       z-index: 50;
     }
-    #start-button {
-      margin: 20px 0;
-      padding: 10px 25px;
-      font-size: 18px;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
   <h1>Complete the Puzzle</h1>
-  <button id="start-button">▶️ Start Puzzle Game</button>
   <div id="timer" style="display:none">Time Left: <span id="countdown">30</span>s</div>
   <div id="preview"></div>
   <div id="puzzle"></div>
@@ -98,10 +94,12 @@
     const played = localStorage.getItem("playedPuzzle");
     if (played === "won") {
       document.getElementById("already-played-message").style.display = "block";
-      document.getElementById("start-button").style.display = "none";
     } else if (played === "lost") {
       document.getElementById("timeout-message").style.display = "block";
-      document.getElementById("start-button").style.display = "none";
+    } else {
+      document.getElementById("timer").style.display = "block";
+      document.getElementById("preview").style.backgroundImage = "url('logo.png')";
+      setTimeout(startPuzzle, 2000);
     }
 
     const confettiCanvas = document.getElementById("confetti-canvas");
@@ -110,17 +108,10 @@
 
     function showPrize(reward) {
       localStorage.setItem("playedPuzzle", "won");
-      document.getElementById("message").textContent = `🎉 You won ₹${reward}! 🎁 Show this screen at the counter.`;
+      document.getElementById("message").textContent = `🎉 Congratulations! You won ₹${reward}! 🎁 Show this screen at the counter.`;
       document.getElementById("message").style.display = "block";
       confetti({ particleCount: 200, spread: 120, origin: { y: 0.3 } });
     }
-
-    document.getElementById("start-button").addEventListener("click", () => {
-      document.getElementById("start-button").style.display = "none";
-      document.getElementById("timer").style.display = "block";
-      document.getElementById("preview").style.backgroundImage = "url('logo.png')";
-      setTimeout(startPuzzle, 2000);
-    });
 
     function startPuzzle() {
       document.getElementById("preview").style.display = "none";
@@ -154,8 +145,8 @@
         piece.style.backgroundPosition = `-${x * tileSize}px -${y * tileSize}px`;
         piece.dataset.correctX = x;
         piece.dataset.correctY = y;
-        piece.style.left = `${Math.random() * 200}px`;
-        piece.style.top = `${Math.random() * 200}px`;
+        piece.style.left = `${Math.random() * (300 - tileSize)}px`;
+        piece.style.top = `${Math.random() * (300 - tileSize)}px`;
         puzzle.appendChild(piece);
 
         piece.onmousedown = dragMouseDown;
@@ -169,8 +160,15 @@
         }
         function drag(e) {
           e.preventDefault();
-          piece.style.left = `${e.clientX - offsetX}px`;
-          piece.style.top = `${e.clientY - offsetY}px`;
+          const puzzleRect = puzzle.getBoundingClientRect();
+          let newX = e.clientX - offsetX - puzzleRect.left;
+          let newY = e.clientY - offsetY - puzzleRect.top;
+
+          newX = Math.max(0, Math.min(newX, puzzle.clientWidth - tileSize));
+          newY = Math.max(0, Math.min(newY, puzzle.clientHeight - tileSize));
+
+          piece.style.left = `${newX}px`;
+          piece.style.top = `${newY}px`;
         }
         function closeDrag() {
           document.onmouseup = null;
