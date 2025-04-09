@@ -1,234 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <title>Pariwar Logo Puzzle</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    #timer {
-      font-size: 18px;
-      color: #e74c3c;
-      margin-bottom: 20px;
-    }
-    #preview {
-      width: 300px;
-      height: 300px;
-      background-size: cover;
-      background-repeat: no-repeat;
-      margin-bottom: 20px;
-      border: 3px solid #444;
-    }
-    #puzzle {
-      width: 300px;
-      height: 300px;
-      position: relative;
-      border: 3px dashed #333;
-      overflow: hidden;
-    }
-    .piece {
-      width: 100px;
-      height: 100px;
-      background-size: 300px 300px;
-      border: 1px solid #ccc;
-      position: absolute;
-      touch-action: none;
-      z-index: 10;
-    }
-    .shake {
-      animation: shake 0.3s;
-    }
-    @keyframes shake {
-      0% { transform: translate(1px, 1px) rotate(0deg); }
-      20% { transform: translate(-1px, -2px) rotate(-1deg); }
-      40% { transform: translate(-3px, 0px) rotate(1deg); }
-      60% { transform: translate(3px, 2px) rotate(0deg); }
-      80% { transform: translate(1px, -1px) rotate(1deg); }
-      100% { transform: translate(-1px, 2px) rotate(-1deg); }
-    }
-    #message, #timeout-message, #already-played-message {
-      margin-top: 20px;
-      font-size: 20px;
-    }
-    #already-played-message {
-      color: #555;
-    }
-    #timeout-message {
-      color: red;
-      display: none;
-    }
-    #message {
-      color: green;
-      display: none;
-    }
-    canvas {
-      position: absolute;
-    }
-    #confetti-canvas {
-      pointer-events: none;
-      z-index: 50;
-    }
-  </style>
-</head>
-<body>
-  <h1>Complete the Puzzle</h1>
-  <div id="timer" style="display:none">Time Left: <span id="countdown">30</span>s</div>
-  <div id="preview"></div>
-  <div id="puzzle"></div>
-  <div id="message"></div>
-  <div id="timeout-message">😢 Better luck next time!</div>
-  <div id="already-played-message" style="display: none;">You’ve already played and claimed your prize!</div>
-  <canvas id="confetti-canvas"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-  <script>
-    const played = localStorage.getItem("playedPuzzle");
-    if (played === "won") {
-      document.getElementById("already-played-message").style.display = "block";
-    } else if (played === "lost") {
-      document.getElementById("timeout-message").style.display = "block";
-    } else {
-      document.getElementById("preview").style.backgroundImage = "url('logo.png')";
-      setTimeout(startPuzzle, 2000);
+// Inside startPuzzle function
+// Add before shuffled.forEach:
+const occupiedGrid = Array(size).fill(null).map(() => Array(size).fill(null));
+
+// Inside shuffled.forEach, replace checkPlacement() with the updated function:
+function checkPlacement() {
+  const correctX = parseInt(piece.dataset.correctX);
+  const correctY = parseInt(piece.dataset.correctY);
+  const targetX = correctX * tileSize;
+  const targetY = correctY * tileSize;
+  const deltaX = Math.abs(piece.offsetLeft - targetX);
+  const deltaY = Math.abs(piece.offsetTop - targetY);
+
+  if (deltaX < 15 && deltaY < 15) {
+    // If another piece is already in this position, move it out
+    const existing = occupiedGrid[correctY][correctX];
+    if (existing && existing !== piece) {
+      existing.style.left = `${Math.random() * (300 - tileSize)}px`;
+      existing.style.top = `${Math.random() * (300 - tileSize)}px`;
+      existing.style.zIndex = 10;
     }
 
-    const confettiCanvas = document.getElementById("confetti-canvas");
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-
-    function showPrize(reward) {
-      localStorage.setItem("playedPuzzle", "won");
-      document.getElementById("message").textContent = `🎉 Congratulations! You won ₹${reward}! 🎁 Show this screen at the counter.`;
-      document.getElementById("message").style.display = "block";
-      confetti({ particleCount: 200, spread: 120, origin: { y: 0.3 } });
+    piece.style.left = `${targetX}px`;
+    piece.style.top = `${targetY}px`;
+    piece.style.zIndex = 1;
+    if (occupiedGrid[correctY][correctX] !== piece) {
+      correctCount++;
     }
+    occupiedGrid[correctY][correctX] = piece;
 
-    function startPuzzle() {
-      document.getElementById("preview").style.display = "none";
-      document.getElementById("timer").style.display = "block";
-
-      const puzzle = document.getElementById("puzzle");
-      const size = 3;
-      const tileSize = 100;
-      const positions = [];
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          positions.push({ x, y });
-        }
-      }
-      const shuffled = [...positions].sort(() => Math.random() - 0.5);
-      let correctCount = 0;
-      let timeLeft = 30;
-      const countdown = document.getElementById("countdown");
-      const interval = setInterval(() => {
-        timeLeft--;
-        countdown.textContent = timeLeft;
-        if (timeLeft === 0) {
-          clearInterval(interval);
-          if (correctCount < size * size) {
-            localStorage.setItem("playedPuzzle", "lost");
-            document.getElementById("timeout-message").style.display = "block";
-          }
-        }
-      }, 1000);
-
-      shuffled.forEach(({ x, y }) => {
-        const piece = document.createElement("div");
-        piece.className = "piece";
-        piece.style.backgroundImage = "url('logo.png')";
-        piece.style.backgroundPosition = `-${x * tileSize}px -${y * tileSize}px`;
-        piece.dataset.correctX = x;
-        piece.dataset.correctY = y;
-        piece.style.left = `${Math.random() * (300 - tileSize)}px`;
-        piece.style.top = `${Math.random() * (300 - tileSize)}px`;
-        puzzle.appendChild(piece);
-
-        let offsetX, offsetY;
-
-        const onTouchStart = (e) => {
-          const touch = e.touches[0];
-          offsetX = touch.clientX - piece.offsetLeft;
-          offsetY = touch.clientY - piece.offsetTop;
-          document.ontouchmove = onTouchMove;
-          document.ontouchend = onTouchEnd;
-        };
-
-        const onTouchMove = (e) => {
-          const touch = e.touches[0];
-          const puzzleRect = puzzle.getBoundingClientRect();
-          let newX = touch.clientX - offsetX - puzzleRect.left;
-          let newY = touch.clientY - offsetY - puzzleRect.top;
-          newX = Math.max(0, Math.min(newX, puzzle.clientWidth - tileSize));
-          newY = Math.max(0, Math.min(newY, puzzle.clientHeight - tileSize));
-          piece.style.left = `${newX}px`;
-          piece.style.top = `${newY}px`;
-        };
-
-        const onTouchEnd = () => {
-          document.ontouchmove = null;
-          document.ontouchend = null;
-          checkPlacement();
-        };
-
-        const onMouseDown = (e) => {
-          offsetX = e.clientX - piece.offsetLeft;
-          offsetY = e.clientY - piece.offsetTop;
-          document.onmousemove = onMouseMove;
-          document.onmouseup = onMouseUp;
-        };
-
-        const onMouseMove = (e) => {
-          const puzzleRect = puzzle.getBoundingClientRect();
-          let newX = e.clientX - offsetX - puzzleRect.left;
-          let newY = e.clientY - offsetY - puzzleRect.top;
-          newX = Math.max(0, Math.min(newX, puzzle.clientWidth - tileSize));
-          newY = Math.max(0, Math.min(newY, puzzle.clientHeight - tileSize));
-          piece.style.left = `${newX}px`;
-          piece.style.top = `${newY}px`;
-        };
-
-        const onMouseUp = () => {
-          document.onmousemove = null;
-          document.onmouseup = null;
-          checkPlacement();
-        };
-
-        function checkPlacement() {
-          const targetX = piece.dataset.correctX * tileSize;
-          const targetY = piece.dataset.correctY * tileSize;
-          const deltaX = Math.abs(piece.offsetLeft - targetX);
-          const deltaY = Math.abs(piece.offsetTop - targetY);
-          if (deltaX < 15 && deltaY < 15) {
-            piece.style.left = `${targetX}px`;
-            piece.style.top = `${targetY}px`;
-            piece.style.zIndex = 1;
-            correctCount++;
-            if (correctCount === size * size) {
-              clearInterval(interval);
-              const reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
-              showPrize(reward);
-            }
-          } else {
-            piece.classList.add("shake");
-            setTimeout(() => piece.classList.remove("shake"), 300);
-          }
-        }
-
-        piece.addEventListener("mousedown", onMouseDown);
-        piece.addEventListener("touchstart", onTouchStart);
-      });
+    if (correctCount === size * size) {
+      clearInterval(interval);
+      const reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
+      showPrize(reward);
     }
-  </script>
-</body>
-</html>
+  } else {
+    piece.classList.add("shake");
+    setTimeout(() => piece.classList.remove("shake"), 300);
+  }
+}
+
+// Also reset correctCount and occupiedGrid at start:
+correctCount = 0;
+occupiedGrid.forEach(row => row.fill(null));
