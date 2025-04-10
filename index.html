@@ -9,13 +9,19 @@
       margin: 0;
       padding: 0;
       background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
       font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+    header h2 {
+      margin: 5px 0;
+      font-size: 18px;
+      color: #444;
     }
     #puzzle-container {
       position: relative;
@@ -24,12 +30,13 @@
       border: 3px solid #ccc;
       box-sizing: border-box;
       overflow: hidden;
+      touch-action: none;
     }
     .piece {
       position: absolute;
       width: 100px;
       height: 100px;
-      background-image: url('logo.png');
+      background-image: url('BAC3BB08-D132-41B6-B010-AC0DC4905E77.jpeg');
       background-size: 300px 300px;
       cursor: grab;
       transition: left 0.2s, top 0.2s;
@@ -44,15 +51,9 @@
     }
     #message {
       font-size: 1.2em;
-      margin-top: 15px;
+      margin-top: 20px;
       font-weight: bold;
       text-align: center;
-    }
-    #timer {
-      font-size: 1.2em;
-      margin-bottom: 10px;
-      font-weight: bold;
-      color: #ff3333;
     }
     #confetti {
       position: fixed;
@@ -66,7 +67,10 @@
   </style>
 </head>
 <body>
-  <div id="timer">Time Left: 30s</div>
+  <header>
+    <h2 id="timer">Reward in 30 seconds</h2>
+    <h2>Drag pieces to complete the puzzle</h2>
+  </header>
   <div id="puzzle-container"></div>
   <div id="message"></div>
   <canvas id="confetti"></canvas>
@@ -77,6 +81,7 @@
     const canvas = document.getElementById("confetti");
     const ctx = canvas.getContext("2d");
     const timerDisplay = document.getElementById("timer");
+
     const size = 3;
     const tileSize = 100;
     let pieces = [];
@@ -91,7 +96,7 @@
 
     function showPreview() {
       const preview = document.createElement("img");
-      preview.src = "logo.png";
+      preview.src = "BAC3BB08-D132-41B6-B010-AC0DC4905E77.jpeg";
       preview.style.position = "absolute";
       preview.style.width = "100%";
       preview.style.height = "100%";
@@ -109,7 +114,6 @@
       pieces = [];
       container.innerHTML = "";
       message.textContent = "";
-      timerDisplay.textContent = `Time Left: ${timeLeft}s`;
       gameOver = false;
 
       for (let y = 0; y < size; y++) {
@@ -125,15 +129,13 @@
           pieces.push(piece);
 
           piece.addEventListener("mousedown", dragStart);
-          piece.addEventListener("touchstart", dragStart, { passive: false });
+          piece.addEventListener("touchstart", dragStart);
         }
       }
 
       interval = setInterval(() => {
-        if (timeLeft > 0) {
-          timeLeft--;
-          timerDisplay.textContent = `Time Left: ${timeLeft}s`;
-        }
+        timeLeft--;
+        timerDisplay.textContent = `Reward in ${timeLeft} seconds`;
         if (timeLeft === 0 && !gameOver) {
           gameOver = true;
           clearInterval(interval);
@@ -143,15 +145,22 @@
     }
 
     function dragStart(e) {
-      e.preventDefault();
+      if (gameOver) return;
+
       const piece = e.target;
       const shiftX = (e.clientX || e.touches[0].clientX) - piece.offsetLeft;
       const shiftY = (e.clientY || e.touches[0].clientY) - piece.offsetTop;
       piece.style.zIndex = 1000;
 
       function moveAt(clientX, clientY) {
-        piece.style.left = clientX - shiftX + "px";
-        piece.style.top = clientY - shiftY + "px";
+        let newX = clientX - shiftX;
+        let newY = clientY - shiftY;
+
+        newX = Math.max(0, Math.min(300 - tileSize, newX));
+        newY = Math.max(0, Math.min(300 - tileSize, newY));
+
+        piece.style.left = newX + "px";
+        piece.style.top = newY + "px";
       }
 
       function onMouseMove(e) {
