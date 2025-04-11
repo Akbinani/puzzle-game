@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 
 const cardData = [
   { id: 1, type: "icon", value: "logo" },
@@ -52,6 +53,7 @@ export default function MemoryGame() {
     if (matchedCount === 8 && !gameOver) {
       setGameOver(true);
       setGameWon(true);
+      sprinkleConfetti();
     }
   }, [matchedCount, gameOver]);
 
@@ -71,8 +73,12 @@ export default function MemoryGame() {
       if (firstCard.value === secondCard.value) {
         newCards[firstIdx].matched = true;
         newCards[secondIdx].matched = true;
-        setMatchedCount(matchedCount + 1);
-        setTimeout(() => sprinkleConfetti(), 300);
+        setCards([...newCards]);
+        setMatchedCount((prev) => {
+          const newCount = prev + 1;
+          setTimeout(() => sprinkleConfetti(), 300);
+          return newCount;
+        });
       } else {
         setTimeout(() => {
           newCards[firstIdx].flipped = false;
@@ -85,8 +91,11 @@ export default function MemoryGame() {
   };
 
   const sprinkleConfetti = () => {
-    // Placeholder for confetti effect logic
-    console.log("Confetti sprinkled!");
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
   };
 
   const renderCard = (card, index) => (
@@ -113,7 +122,6 @@ export default function MemoryGame() {
           <h3 className="text-2xl font-bold">
             {gameWon ? "You have done it!" : "Time’s up!"}
           </h3>
-          {gameWon && <p>Confetti animation here</p>}
         </div>
       )}
     </div>
