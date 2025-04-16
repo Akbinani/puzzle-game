@@ -64,6 +64,18 @@
       pointer-events: none;
       z-index: 9999;
     }
+    #prize-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      display: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -73,6 +85,7 @@
   </header>
   <div id="puzzle-container"></div>
   <div id="message"></div>
+  <button id="prize-button">Tap to Reveal Prize</button>
   <canvas id="confetti"></canvas>
 
   <script>
@@ -81,6 +94,7 @@
     const canvas = document.getElementById("confetti");
     const ctx = canvas.getContext("2d");
     const timerDisplay = document.getElementById("timer");
+    const prizeButton = document.getElementById("prize-button");
 
     const size = 3;
     const tileSize = 100;
@@ -90,6 +104,7 @@
     let interval;
     let timeLeft = 30;
     let gameOver = false;
+    let reward = 0;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -110,10 +125,12 @@
 
     function startPuzzle() {
       correctCount = 0;
+      timeLeft = 30;
       occupiedGrid.forEach(row => row.fill(null));
       pieces = [];
       container.innerHTML = "";
       message.textContent = "";
+      prizeButton.style.display = "none";
       gameOver = false;
 
       for (let y = 0; y < size; y++) {
@@ -208,8 +225,9 @@
         if (correctCount === size * size && !gameOver) {
           gameOver = true;
           clearInterval(interval);
-          const reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
-          showPrize(reward);
+          reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
+          message.textContent = "🎉 Puzzle Complete!";
+          prizeButton.style.display = "inline-block";
         }
       } else {
         piece.classList.add("shake");
@@ -217,7 +235,12 @@
       }
     }
 
+    prizeButton.addEventListener("click", () => {
+      showPrize(reward);
+    });
+
     function showPrize(amount) {
+      prizeButton.style.display = "none";
       message.textContent = `🎉 Congratulations! You won ₹${amount}!`;
       launchConfetti();
     }
