@@ -9,13 +9,19 @@
       margin: 0;
       padding: 0;
       background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
       font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+    header h2 {
+      margin: 5px 0;
+      font-size: 18px;
+      color: #444;
     }
     #puzzle-container {
       position: relative;
@@ -24,6 +30,7 @@
       border: 3px solid #ccc;
       box-sizing: border-box;
       overflow: hidden;
+      touch-action: none;
     }
     .piece {
       position: absolute;
@@ -44,15 +51,9 @@
     }
     #message {
       font-size: 1.2em;
-      margin-top: 15px;
+      margin-top: 20px;
       font-weight: bold;
       text-align: center;
-    }
-    #timer {
-      font-size: 1.2em;
-      margin-bottom: 10px;
-      font-weight: bold;
-      color: #ff3333;
     }
     #confetti {
       position: fixed;
@@ -66,7 +67,10 @@
   </style>
 </head>
 <body>
-  <div id="timer">Time Left: 30s</div>
+  <header>
+    <h2 id="timer">Reward in 30 seconds</h2>
+    <h2>Drag pieces to complete the puzzle</h2>
+  </header>
   <div id="puzzle-container"></div>
   <div id="message"></div>
   <canvas id="confetti"></canvas>
@@ -77,6 +81,7 @@
     const canvas = document.getElementById("confetti");
     const ctx = canvas.getContext("2d");
     const timerDisplay = document.getElementById("timer");
+
     const size = 3;
     const tileSize = 100;
     let pieces = [];
@@ -109,31 +114,28 @@
       pieces = [];
       container.innerHTML = "";
       message.textContent = "";
-      timerDisplay.textContent = `Time Left: ${timeLeft}s`;
       gameOver = false;
 
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           const piece = document.createElement("div");
           piece.className = "piece";
-          piece.style.backgroundPosition = `-${x * tileSize}px -${y * tileSize}px`;
+          piece.style.backgroundPosition = -${x * tileSize}px -${y * tileSize}px;
           piece.dataset.correctX = x;
           piece.dataset.correctY = y;
-          piece.style.left = `${Math.random() * (300 - tileSize)}px`;
-          piece.style.top = `${Math.random() * (300 - tileSize)}px`;
+          piece.style.left = ${Math.random() * (300 - tileSize)}px;
+          piece.style.top = ${Math.random() * (300 - tileSize)}px;
           container.appendChild(piece);
           pieces.push(piece);
 
           piece.addEventListener("mousedown", dragStart);
-          piece.addEventListener("touchstart", dragStart, { passive: false });
+          piece.addEventListener("touchstart", dragStart);
         }
       }
 
       interval = setInterval(() => {
-        if (timeLeft > 0) {
-          timeLeft--;
-          timerDisplay.textContent = `Time Left: ${timeLeft}s`;
-        }
+        timeLeft--;
+        timerDisplay.textContent = Reward in ${timeLeft} seconds;
         if (timeLeft === 0 && !gameOver) {
           gameOver = true;
           clearInterval(interval);
@@ -143,15 +145,22 @@
     }
 
     function dragStart(e) {
-      e.preventDefault();
+      if (gameOver) return;
+
       const piece = e.target;
       const shiftX = (e.clientX || e.touches[0].clientX) - piece.offsetLeft;
       const shiftY = (e.clientY || e.touches[0].clientY) - piece.offsetTop;
       piece.style.zIndex = 1000;
 
       function moveAt(clientX, clientY) {
-        piece.style.left = clientX - shiftX + "px";
-        piece.style.top = clientY - shiftY + "px";
+        let newX = clientX - shiftX;
+        let newY = clientY - shiftY;
+
+        newX = Math.max(0, Math.min(300 - tileSize, newX));
+        newY = Math.max(0, Math.min(300 - tileSize, newY));
+
+        piece.style.left = newX + "px";
+        piece.style.top = newY + "px";
       }
 
       function onMouseMove(e) {
@@ -183,13 +192,13 @@
       if (deltaX < 15 && deltaY < 15) {
         const existing = occupiedGrid[correctY][correctX];
         if (existing && existing !== piece) {
-          existing.style.left = `${Math.random() * (300 - tileSize)}px`;
-          existing.style.top = `${Math.random() * (300 - tileSize)}px`;
+          existing.style.left = ${Math.random() * (300 - tileSize)}px;
+          existing.style.top = ${Math.random() * (300 - tileSize)}px;
           existing.style.zIndex = 10;
         }
 
-        piece.style.left = `${targetX}px`;
-        piece.style.top = `${targetY}px`;
+        piece.style.left = ${targetX}px;
+        piece.style.top = ${targetY}px;
         piece.style.zIndex = 1;
         if (occupiedGrid[correctY][correctX] !== piece) {
           correctCount++;
@@ -209,7 +218,7 @@
     }
 
     function showPrize(amount) {
-      message.textContent = `🎉 Congratulations! You won ₹${amount}!`;
+      message.textContent = 🎉 Congratulations! You won ₹${amount}!;
       launchConfetti();
     }
 
@@ -222,7 +231,7 @@
           dx: (Math.random() - 0.5) * 4,
           dy: Math.random() * -5,
           size: Math.random() * 6 + 2,
-          color: `hsl(${Math.random() * 360}, 100%, 50%)`
+          color: hsl(${Math.random() * 360}, 100%, 50%)
         });
       }
 
