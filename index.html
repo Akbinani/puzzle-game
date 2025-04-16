@@ -1,278 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pariwar Puzzle Reward</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: #fff;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    header {
-      text-align: center;
-      padding: 20px;
-    }
-    header h2 {
-      margin: 5px 0;
-      font-size: 18px;
-      color: #444;
-    }
-    #puzzle-container {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      border: 3px solid #ccc;
-      box-sizing: border-box;
-      overflow: hidden;
-      touch-action: none;
-    }
-    .piece {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      background-image: url('logo.png');
-      background-size: 300px 300px;
-      cursor: grab;
-      transition: left 0.2s, top 0.2s;
-    }
-    .shake {
-      animation: shake 0.3s;
-    }
-    @keyframes shake {
-      0% { transform: translate(2px, 2px); }
-      50% { transform: translate(-2px, -2px); }
-      100% { transform: translate(2px, -2px); }
-    }
-    #message {
-      font-size: 1.2em;
-      margin-top: 20px;
-      font-weight: bold;
-      text-align: center;
-    }
-    #confetti {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 9999;
-    }
-    #prize-button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      font-weight: bold;
-      background-color: #28a745;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      display: none;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h2 id="timer">Reward in 30 seconds</h2>
-    <h2>Drag pieces to complete the puzzle</h2>
-  </header>
-  <div id="puzzle-container"></div>
-  <div id="message"></div>
-  <button id="prize-button">Tap to Reveal Prize</button>
-  <canvas id="confetti"></canvas>
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
-  <script>
-    const container = document.getElementById("puzzle-container");
-    const message = document.getElementById("message");
-    const canvas = document.getElementById("confetti");
-    const ctx = canvas.getContext("2d");
-    const timerDisplay = document.getElementById("timer");
-    const prizeButton = document.getElementById("prize-button");
+const PuzzleGame = () => {
+  const [showWhiteScreen, setShowWhiteScreen] = useState(true);
+  const [showPuzzle, setShowPuzzle] = useState(false);
 
-    const size = 3;
-    const tileSize = 100;
-    let pieces = [];
-    let correctCount = 0;
-    let occupiedGrid = Array(size).fill(null).map(() => Array(size).fill(null));
-    let interval;
-    let timeLeft = 30;
-    let gameOver = false;
-    let reward = 0;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowWhiteScreen(false);
+      setShowPuzzle(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+  const containerStyle = {
+    position: "relative",
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  };
 
-    function showPreview() {
-      const preview = document.createElement("img");
-      preview.src = "logo.png";
-      preview.style.position = "absolute";
-      preview.style.width = "100%";
-      preview.style.height = "100%";
-      preview.style.zIndex = 10;
-      container.appendChild(preview);
-      setTimeout(() => {
-        preview.remove();
-        startPuzzle();
-      }, 2000);
-    }
+  const previewStyle = {
+    position: "absolute",
+    width: "200px",
+    height: "200px",
+    backgroundImage: "url('/logo-puzzle.png')",
+    backgroundSize: "cover",
+    zIndex: 10,
+  };
 
-    function startPuzzle() {
-      correctCount = 0;
-      timeLeft = 30;
-      occupiedGrid.forEach(row => row.fill(null));
-      pieces = [];
-      container.innerHTML = "";
-      message.textContent = "";
-      prizeButton.style.display = "none";
-      gameOver = false;
+  const pieceStyle = {
+    width: "100px",
+    height: "100px",
+    backgroundSize: "200px 200px",
+    position: "absolute",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+  };
 
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          const piece = document.createElement("div");
-          piece.className = "piece";
-          piece.style.backgroundPosition = `-${x * tileSize}px -${y * tileSize}px`;
-          piece.dataset.correctX = x;
-          piece.dataset.correctY = y;
-          piece.style.left = `${Math.random() * (300 - tileSize)}px`;
-          piece.style.top = `${Math.random() * (300 - tileSize)}px`;
-          container.appendChild(piece);
-          pieces.push(piece);
+  const pieces = [
+    { id: 1, top: 0, left: 0, backgroundPosition: "0px 0px" },
+    { id: 2, top: 0, left: 100, backgroundPosition: "-100px 0px" },
+    { id: 3, top: 100, left: 0, backgroundPosition: "0px -100px" },
+    { id: 4, top: 100, left: 100, backgroundPosition: "-100px -100px" },
+  ];
 
-          piece.addEventListener("mousedown", dragStart);
-          piece.addEventListener("touchstart", dragStart);
-        }
-      }
+  return (
+    <div style={containerStyle}>
+      {showWhiteScreen && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.5, delay: 1.5 }}
+          style={{ ...containerStyle, backgroundColor: "#fff", zIndex: 20 }}
+        ></motion.div>
+      )}
 
-      interval = setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = `Reward in ${timeLeft} seconds`;
-        if (timeLeft === 0 && !gameOver) {
-          gameOver = true;
-          clearInterval(interval);
-          message.textContent = "Better Luck Next Time!";
-        }
-      }, 1000);
-    }
+      {!showWhiteScreen && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 1 }}
+          style={{ ...previewStyle }}
+        ></motion.div>
+      )}
 
-    function dragStart(e) {
-      if (gameOver) return;
+      {showPuzzle &&
+        pieces.map((piece) => (
+          <motion.div
+            key={piece.id}
+            style={{
+              ...pieceStyle,
+              top: piece.top,
+              left: piece.left,
+              backgroundImage: "url('/logo-puzzle.png')",
+              backgroundPosition: piece.backgroundPosition,
+            }}
+            whileHover={{ scale: 1.1 }}
+            drag
+            dragConstraints={{ left: 0, top: 0, right: 200, bottom: 200 }}
+          ></motion.div>
+        ))}
+    </div>
+  );
+};
 
-      const piece = e.target;
-      const shiftX = (e.clientX || e.touches[0].clientX) - piece.offsetLeft;
-      const shiftY = (e.clientY || e.touches[0].clientY) - piece.offsetTop;
-      piece.style.zIndex = 1000;
-
-      function moveAt(clientX, clientY) {
-        let newX = clientX - shiftX;
-        let newY = clientY - shiftY;
-
-        newX = Math.max(0, Math.min(300 - tileSize, newX));
-        newY = Math.max(0, Math.min(300 - tileSize, newY));
-
-        piece.style.left = newX + "px";
-        piece.style.top = newY + "px";
-      }
-
-      function onMouseMove(e) {
-        moveAt(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
-      }
-
-      function onDrop() {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("touchmove", onMouseMove);
-        document.removeEventListener("mouseup", onDrop);
-        document.removeEventListener("touchend", onDrop);
-        checkPlacement(piece);
-      }
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("touchmove", onMouseMove);
-      document.addEventListener("mouseup", onDrop);
-      document.addEventListener("touchend", onDrop);
-    }
-
-    function checkPlacement(piece) {
-      const correctX = parseInt(piece.dataset.correctX);
-      const correctY = parseInt(piece.dataset.correctY);
-      const targetX = correctX * tileSize;
-      const targetY = correctY * tileSize;
-      const deltaX = Math.abs(piece.offsetLeft - targetX);
-      const deltaY = Math.abs(piece.offsetTop - targetY);
-
-      if (deltaX < 15 && deltaY < 15) {
-        const existing = occupiedGrid[correctY][correctX];
-        if (existing && existing !== piece) {
-          existing.style.left = `${Math.random() * (300 - tileSize)}px`;
-          existing.style.top = `${Math.random() * (300 - tileSize)}px`;
-          existing.style.zIndex = 10;
-        }
-
-        piece.style.left = `${targetX}px`;
-        piece.style.top = `${targetY}px`;
-        piece.style.zIndex = 1;
-        if (occupiedGrid[correctY][correctX] !== piece) {
-          correctCount++;
-        }
-        occupiedGrid[correctY][correctX] = piece;
-
-        if (correctCount === size * size && !gameOver) {
-          gameOver = true;
-          clearInterval(interval);
-          reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
-          message.textContent = "🎉 Puzzle Complete!";
-          prizeButton.style.display = "inline-block";
-        }
-      } else {
-        piece.classList.add("shake");
-        setTimeout(() => piece.classList.remove("shake"), 300);
-      }
-    }
-
-    prizeButton.addEventListener("click", () => {
-      showPrize(reward);
-    });
-
-    function showPrize(amount) {
-      prizeButton.style.display = "none";
-      message.textContent = `🎉 Congratulations! You won ₹${amount}!`;
-      launchConfetti();
-    }
-
-    function launchConfetti() {
-      const particles = [];
-      for (let i = 0; i < 100; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          dx: (Math.random() - 0.5) * 4,
-          dy: Math.random() * -5,
-          size: Math.random() * 6 + 2,
-          color: `hsl(${Math.random() * 360}, 100%, 50%)`
-        });
-      }
-
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => {
-          ctx.fillStyle = p.color;
-          ctx.fillRect(p.x, p.y, p.size, p.size);
-          p.x += p.dx;
-          p.y += p.dy;
-          p.dy += 0.1;
-        });
-        requestAnimationFrame(draw);
-      }
-      draw();
-    }
-
-    showPreview();
-  </script>
-</body>
-</html>
+export default PuzzleGame;
