@@ -1,129 +1,255 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import confetti from "canvas-confetti";
-
-const cardData = [
-  { id: 1, type: "icon", value: "logo" },
-  { id: 2, type: "icon", value: "logo" },
-  { id: 3, type: "icon", value: "smiley" },
-  { id: 4, type: "icon", value: "smiley" },
-  { id: 5, type: "number", value: "1" },
-  { id: 6, type: "number", value: "1" },
-  { id: 7, type: "number", value: "5" },
-  { id: 8, type: "number", value: "5" },
-  { id: 9, type: "number", value: "7" },
-  { id: 10, type: "number", value: "7" },
-  { id: 11, type: "image", value: "chocolate" },
-  { id: 12, type: "image", value: "chocolate" },
-  { id: 13, type: "image", value: "cashewnut" },
-  { id: 14, type: "image", value: "cashewnut" },
-  { id: 15, type: "keyword", value: "Energy" },
-  { id: 16, type: "keyword", value: "Energy" },
-];
-
-const shuffleCards = () => {
-  let shuffled = [...cardData].sort(() => 0.5 - Math.random());
-  return shuffled.map((card, index) => ({ ...card, key: index, flipped: false, matched: false }));
-};
-
-export default function MemoryGame() {
-  const [cards, setCards] = useState([]);
-  const [flippedCards, setFlippedCards] = useState([]);
-  const [matchedCount, setMatchedCount] = useState(0);
-  const [timer, setTimer] = useState(30);
-  const [gameOver, setGameOver] = useState(false);
-  const [gameWon, setGameWon] = useState(false);
-
-  useEffect(() => {
-    setCards(shuffleCards());
-  }, []);
-
-  useEffect(() => {
-    if (timer > 0 && !gameOver) {
-      const countdown = setTimeout(() => setTimer(timer - 1), 1000);
-      return () => clearTimeout(countdown);
-    } else if (!gameOver) {
-      setGameOver(true);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pariwar Puzzle Reward</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-  }, [timer, gameOver]);
-
-  useEffect(() => {
-    if (matchedCount === 8 && !gameOver) {
-      setGameOver(true);
-      setGameWon(true);
-      sprinkleConfetti();
+    header {
+      text-align: center;
+      padding: 20px;
     }
-  }, [matchedCount, gameOver]);
+    header h2 {
+      margin: 5px 0;
+      font-size: 18px;
+      color: #444;
+    }
+    #puzzle-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      border: 3px solid #ccc;
+      box-sizing: border-box;
+      overflow: hidden;
+      touch-action: none;
+    }
+    .piece {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-image: url('logo.png');
+      background-size: 300px 300px;
+      cursor: grab;
+      transition: left 0.2s, top 0.2s;
+    }
+    .shake {
+      animation: shake 0.3s;
+    }
+    @keyframes shake {
+      0% { transform: translate(2px, 2px); }
+      50% { transform: translate(-2px, -2px); }
+      100% { transform: translate(2px, -2px); }
+    }
+    #message {
+      font-size: 1.2em;
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+    #confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2 id="timer">Reward in 30 seconds</h2>
+    <h2>Drag pieces to complete the puzzle</h2>
+  </header>
+  <div id="puzzle-container"></div>
+  <div id="message"></div>
+  <canvas id="confetti"></canvas>
 
-  const handleCardClick = (index) => {
-    if (gameOver || cards[index].flipped || cards[index].matched || flippedCards.length === 2) return;
+  <script>
+    const container = document.getElementById("puzzle-container");
+    const message = document.getElementById("message");
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    const timerDisplay = document.getElementById("timer");
 
-    const newCards = [...cards];
-    newCards[index].flipped = true;
-    const newFlipped = [...flippedCards, index];
-    setCards(newCards);
-    setFlippedCards(newFlipped);
+    const size = 3;
+    const tileSize = 100;
+    let pieces = [];
+    let correctCount = 0;
+    let occupiedGrid = Array(size).fill(null).map(() => Array(size).fill(null));
+    let interval;
+    let timeLeft = 30;
+    let gameOver = false;
 
-    if (newFlipped.length === 2) {
-      const [firstIdx, secondIdx] = newFlipped;
-      const firstCard = newCards[firstIdx];
-      const secondCard = newCards[secondIdx];
-      if (firstCard.value === secondCard.value) {
-        newCards[firstIdx].matched = true;
-        newCards[secondIdx].matched = true;
-        setCards([...newCards]);
-        setMatchedCount((prev) => {
-          const newCount = prev + 1;
-          setTimeout(() => sprinkleConfetti(), 300);
-          return newCount;
-        });
-      } else {
-        setTimeout(() => {
-          newCards[firstIdx].flipped = false;
-          newCards[secondIdx].flipped = false;
-          setCards([...newCards]);
-        }, 800);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    function showPreview() {
+      const preview = document.createElement("img");
+      preview.src = "logo.png";
+      preview.style.position = "absolute";
+      preview.style.width = "100%";
+      preview.style.height = "100%";
+      preview.style.zIndex = 10;
+      container.appendChild(preview);
+      setTimeout(() => {
+        preview.remove();
+        startPuzzle();
+      }, 2000);
+    }
+
+    function startPuzzle() {
+      correctCount = 0;
+      occupiedGrid.forEach(row => row.fill(null));
+      pieces = [];
+      container.innerHTML = "";
+      message.textContent = "";
+      gameOver = false;
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const piece = document.createElement("div");
+          piece.className = "piece";
+          piece.style.backgroundPosition = `-${x * tileSize}px -${y * tileSize}px`;
+          piece.dataset.correctX = x;
+          piece.dataset.correctY = y;
+          piece.style.left = `${Math.random() * (300 - tileSize)}px`;
+          piece.style.top = `${Math.random() * (300 - tileSize)}px`;
+          container.appendChild(piece);
+          pieces.push(piece);
+
+          piece.addEventListener("mousedown", dragStart);
+          piece.addEventListener("touchstart", dragStart);
+        }
       }
-      setTimeout(() => setFlippedCards([]), 800);
+
+      interval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = `Reward in ${timeLeft} seconds`;
+        if (timeLeft === 0 && !gameOver) {
+          gameOver = true;
+          clearInterval(interval);
+          message.textContent = "Better Luck Next Time!";
+        }
+      }, 1000);
     }
-  };
 
-  const sprinkleConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
-  };
+    function dragStart(e) {
+      if (gameOver) return;
 
-  const renderCard = (card, index) => (
-    <motion.div key={card.key} onClick={() => handleCardClick(index)} className="cursor-pointer">
-      <Card className="h-20 w-20 m-2">
-        <CardContent className="flex items-center justify-center text-xl">
-          {card.flipped || card.matched ? card.value : ""}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
+      const piece = e.target;
+      const shiftX = (e.clientX || e.touches[0].clientX) - piece.offsetLeft;
+      const shiftY = (e.clientY || e.touches[0].clientY) - piece.offsetTop;
+      piece.style.zIndex = 1000;
 
-  return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Match the Pairs</h2>
-        <div className="text-lg">Time: {timer}s</div>
-      </div>
-      <div className="grid grid-cols-4 gap-2">
-        {cards.map((card, index) => renderCard(card, index))}
-      </div>
-      {gameOver && (
-        <div className="mt-4 text-center">
-          <h3 className="text-2xl font-bold">
-            {gameWon ? "You have done it!" : "Time’s up!"}
-          </h3>
-        </div>
-      )}
-    </div>
-  );
-}
+      function moveAt(clientX, clientY) {
+        let newX = clientX - shiftX;
+        let newY = clientY - shiftY;
+
+        newX = Math.max(0, Math.min(300 - tileSize, newX));
+        newY = Math.max(0, Math.min(300 - tileSize, newY));
+
+        piece.style.left = newX + "px";
+        piece.style.top = newY + "px";
+      }
+
+      function onMouseMove(e) {
+        moveAt(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
+      }
+
+      function onDrop() {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("touchmove", onMouseMove);
+        document.removeEventListener("mouseup", onDrop);
+        document.removeEventListener("touchend", onDrop);
+        checkPlacement(piece);
+      }
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("touchmove", onMouseMove);
+      document.addEventListener("mouseup", onDrop);
+      document.addEventListener("touchend", onDrop);
+    }
+
+    function checkPlacement(piece) {
+      const correctX = parseInt(piece.dataset.correctX);
+      const correctY = parseInt(piece.dataset.correctY);
+      const targetX = correctX * tileSize;
+      const targetY = correctY * tileSize;
+      const deltaX = Math.abs(piece.offsetLeft - targetX);
+      const deltaY = Math.abs(piece.offsetTop - targetY);
+
+      if (deltaX < 15 && deltaY < 15) {
+        const existing = occupiedGrid[correctY][correctX];
+        if (existing && existing !== piece) {
+          existing.style.left = `${Math.random() * (300 - tileSize)}px`;
+          existing.style.top = `${Math.random() * (300 - tileSize)}px`;
+          existing.style.zIndex = 10;
+        }
+
+        piece.style.left = `${targetX}px`;
+        piece.style.top = `${targetY}px`;
+        piece.style.zIndex = 1;
+        if (occupiedGrid[correctY][correctX] !== piece) {
+          correctCount++;
+        }
+        occupiedGrid[correctY][correctX] = piece;
+
+        if (correctCount === size * size && !gameOver) {
+          gameOver = true;
+          clearInterval(interval);
+          const reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
+          showPrize(reward);
+        }
+      } else {
+        piece.classList.add("shake");
+        setTimeout(() => piece.classList.remove("shake"), 300);
+      }
+    }
+
+    function showPrize(amount) {
+      message.textContent = `🎉 Congratulations! You won ₹${amount}!`;
+      launchConfetti();
+    }
+
+    function launchConfetti() {
+      const particles = [];
+      for (let i = 0; i < 100; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          dx: (Math.random() - 0.5) * 4,
+          dy: Math.random() * -5,
+          size: Math.random() * 6 + 2,
+          color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+          p.x += p.dx;
+          p.y += p.dy;
+          p.dy += 0.1;
+        });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    showPreview();
+  </script>
+</body>
+</html>
