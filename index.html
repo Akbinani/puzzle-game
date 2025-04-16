@@ -2,131 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Puzzle Game</title>
   <style>
     body {
       margin: 0;
-      padding: 0;
-      background: #111;
+      font-family: sans-serif;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      height: 100vh;
-      overflow: hidden;
+      background: #111;
+      color: #fff;
     }
-    #puzzle {
+    #puzzle-board {
       display: grid;
       grid-template-columns: repeat(3, 100px);
       grid-template-rows: repeat(3, 100px);
-      gap: 4px;
-      position: relative;
+      gap: 2px;
+      margin: 20px;
     }
-    .piece {
+    .puzzle-piece {
       width: 100px;
       height: 100px;
       background-size: 300px 300px;
-      position: absolute;
+      border: 1px solid #444;
+      position: relative;
       touch-action: none;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      transition: transform 0.2s;
+      transition: transform 0.3s, box-shadow 0.3s;
     }
     .correct {
-      animation: highlight 0.5s ease-out;
-      pointer-events: none;
-      z-index: 0;
+      box-shadow: 0 0 10px 5px limegreen;
+      animation: fadeOut 1s forwards;
     }
-    @keyframes highlight {
-      0% { box-shadow: 0 0 10px 5px rgba(0,255,0,0.8); }
-      100% { box-shadow: none; }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0.6; box-shadow: none; }
     }
   </style>
 </head>
 <body>
-  <div id="puzzle"></div>
-  <script>
-    const puzzle = document.getElementById('puzzle');
-    const imgURL = 'logo.png'; // Make sure this image is in the same folder
 
-    const size = 100;
-    const gridSize = 3;
-    const pieces = [];
+<h2>Drag the pieces to complete the puzzle</h2>
+<div id="puzzle-board"></div>
 
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
-        const piece = document.createElement('div');
-        piece.classList.add('piece');
-        piece.style.backgroundImage = `url(${imgURL})`;
-        piece.style.backgroundPosition = `-${x * size}px -${y * size}px`;
-        piece.dataset.correctX = x;
-        piece.dataset.correctY = y;
-        puzzle.appendChild(piece);
-        pieces.push(piece);
-      }
+<script>
+  const board = document.getElementById("puzzle-board");
+  const gridSize = 3;
+  const pieceSize = 100;
+  const imageSrc = "logo.png"; // Ensure this is in the same folder
+
+  let positions = [];
+
+  // Generate all pieces
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const piece = document.createElement("div");
+      piece.className = "puzzle-piece";
+      piece.style.backgroundImage = `url(${imageSrc})`;
+      piece.style.backgroundPosition = `-${col * pieceSize}px -${row * pieceSize}px`;
+      piece.dataset.correctX = col;
+      piece.dataset.correctY = row;
+      piece.draggable = false;
+      board.appendChild(piece);
+      positions.push(piece);
     }
+  }
 
-    // Shuffle
-    pieces.forEach(piece => {
-      const randX = Math.floor(Math.random() * gridSize);
-      const randY = Math.floor(Math.random() * gridSize);
-      piece.style.left = `${randX * size}px`;
-      piece.style.top = `${randY * size}px`;
-    });
+  // Shuffle pieces
+  positions.sort(() => Math.random() - 0.5);
+  positions.forEach(piece => board.appendChild(piece));
 
-    // Drag & Drop for mobile and desktop
-    let draggedPiece = null;
-    let offsetX = 0;
-    let offsetY = 0;
+  // Mobile-friendly drag
+  let active = null;
+  let offsetX, offsetY;
 
-    pieces.forEach(piece => {
-      const dragStart = (e) => {
-        draggedPiece = piece;
-        const rect = piece.getBoundingClientRect();
-        offsetX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        offsetY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        piece.style.zIndex = 10;
-      };
+  positions.forEach(piece => {
+    piece.addEventListener("touchstart", dragStart, { passive: false });
+    piece.addEventListener("touchmove", dragMove, { passive: false });
+    piece.addEventListener("touchend", dragEnd);
 
-      const dragging = (e) => {
-        if (!draggedPiece) return;
-        e.preventDefault();
-        const x = (e.touches ? e.touches[0].clientX : e.clientX) - offsetX;
-        const y = (e.touches ? e.touches[0].clientY : e.clientY) - offsetY;
-        draggedPiece.style.left = `${x}px`;
-        draggedPiece.style.top = `${y}px`;
-      };
+    piece.addEventListener("mousedown", dragStart);
+    document.addEventListener("mousemove", dragMove);
+    document.addEventListener("mouseup", dragEnd);
+  });
 
-      const dragEnd = () => {
-        if (!draggedPiece) return;
-        const x = Math.round(parseInt(draggedPiece.style.left) / size);
-        const y = Math.round(parseInt(draggedPiece.style.top) / size);
+  function dragStart(e) {
+    e.preventDefault();
+    active = e.target;
+    const rect = active.getBoundingClientRect();
+    if (e.type === "touchstart") {
+      offsetX = e.touches[0].clientX - rect.left;
+      offsetY = e.touches[0].clientY - rect.top;
+    } else {
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+    }
+    active.style.zIndex = 1000;
+    active.style.position = "absolute";
+  }
 
-        const correctX = parseInt(draggedPiece.dataset.correctX);
-        const correctY = parseInt(draggedPiece.dataset.correctY);
+  function dragMove(e) {
+    if (!active) return;
+    e.preventDefault();
+    let x, y;
+    if (e.type === "touchmove") {
+      x = e.touches[0].clientX;
+      y = e.touches[0].clientY;
+    } else {
+      x = e.clientX;
+      y = e.clientY;
+    }
+    active.style.left = `${x - offsetX}px`;
+    active.style.top = `${y - offsetY}px`;
+  }
 
-        if (x === correctX && y === correctY) {
-          draggedPiece.style.left = `${x * size}px`;
-          draggedPiece.style.top = `${y * size}px`;
-          draggedPiece.classList.add('correct');
-          draggedPiece.removeEventListener('mousedown', dragStart);
-          draggedPiece.removeEventListener('touchstart', dragStart);
-        } else {
-          draggedPiece.style.left = `${x * size}px`;
-          draggedPiece.style.top = `${y * size}px`;
-        }
+  function dragEnd() {
+    if (!active) return;
+    const boardRect = board.getBoundingClientRect();
+    const x = parseInt(active.style.left || 0) - boardRect.left;
+    const y = parseInt(active.style.top || 0) - boardRect.top;
+    const snapX = Math.round(x / pieceSize);
+    const snapY = Math.round(y / pieceSize);
 
-        draggedPiece.style.zIndex = 1;
-        draggedPiece = null;
-      };
-
-      piece.addEventListener('mousedown', dragStart);
-      piece.addEventListener('touchstart', dragStart);
-      document.addEventListener('mousemove', dragging);
-      document.addEventListener('touchmove', dragging, { passive: false });
-      document.addEventListener('mouseup', dragEnd);
-      document.addEventListener('touchend', dragEnd);
-    });
-  </script>
-</body>
-</html>
+    if (
+      snapX == active.dataset.correctX &&
+      snapY == active.dataset.correctY
+    ) {
+      active.style.left = `${snapX * pieceSize}px`;
+      active.style.top = `${snapY * pieceSize}px`;
+      active.classList.add("correct");
+      active.style.zIndex = 1;
+      active.removeEvent
