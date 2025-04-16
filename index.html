@@ -39,6 +39,8 @@
       background-image: url('logo.png');
       background-size: 300px 300px;
       cursor: grab;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      border: 1px solid #eee;
       transition: left 0.2s, top 0.2s;
     }
     .shake {
@@ -71,6 +73,7 @@
     <h2 id="timer">Reward in 30 seconds</h2>
     <h2>Drag pieces to complete the puzzle</h2>
   </header>
+
   <div id="puzzle-container"></div>
   <div id="message"></div>
   <canvas id="confetti"></canvas>
@@ -97,34 +100,38 @@
     function showPreview() {
       const preview = document.createElement("img");
       preview.src = "logo.png";
+      preview.alt = "Puzzle Preview";
       preview.style.position = "absolute";
       preview.style.width = "100%";
       preview.style.height = "100%";
       preview.style.zIndex = 10;
       container.appendChild(preview);
+
       setTimeout(() => {
         preview.remove();
-        startPuzzle();
+        startPuzzle(); // Ensure pieces load AFTER preview hides
       }, 2000);
     }
 
     function startPuzzle() {
       correctCount = 0;
+      gameOver = false;
+      timeLeft = 30;
+      clearInterval(interval);
       occupiedGrid.forEach(row => row.fill(null));
       pieces = [];
       container.innerHTML = "";
       message.textContent = "";
-      gameOver = false;
 
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           const piece = document.createElement("div");
           piece.className = "piece";
-          piece.style.backgroundPosition = -${x * tileSize}px -${y * tileSize}px;
+          piece.style.backgroundPosition = `-${x * tileSize}px -${y * tileSize}px`;
           piece.dataset.correctX = x;
           piece.dataset.correctY = y;
-          piece.style.left = ${Math.random() * (300 - tileSize)}px;
-          piece.style.top = ${Math.random() * (300 - tileSize)}px;
+          piece.style.left = `${Math.random() * (300 - tileSize)}px`;
+          piece.style.top = `${Math.random() * (300 - tileSize)}px`;
           container.appendChild(piece);
           pieces.push(piece);
 
@@ -135,7 +142,7 @@
 
       interval = setInterval(() => {
         timeLeft--;
-        timerDisplay.textContent = Reward in ${timeLeft} seconds;
+        timerDisplay.textContent = `Reward in ${timeLeft} seconds`;
         if (timeLeft === 0 && !gameOver) {
           gameOver = true;
           clearInterval(interval);
@@ -155,10 +162,8 @@
       function moveAt(clientX, clientY) {
         let newX = clientX - shiftX;
         let newY = clientY - shiftY;
-
         newX = Math.max(0, Math.min(300 - tileSize, newX));
         newY = Math.max(0, Math.min(300 - tileSize, newY));
-
         piece.style.left = newX + "px";
         piece.style.top = newY + "px";
       }
@@ -192,13 +197,13 @@
       if (deltaX < 15 && deltaY < 15) {
         const existing = occupiedGrid[correctY][correctX];
         if (existing && existing !== piece) {
-          existing.style.left = ${Math.random() * (300 - tileSize)}px;
-          existing.style.top = ${Math.random() * (300 - tileSize)}px;
+          existing.style.left = `${Math.random() * (300 - tileSize)}px`;
+          existing.style.top = `${Math.random() * (300 - tileSize)}px`;
           existing.style.zIndex = 10;
         }
 
-        piece.style.left = ${targetX}px;
-        piece.style.top = ${targetY}px;
+        piece.style.left = `${targetX}px`;
+        piece.style.top = `${targetY}px`;
         piece.style.zIndex = 1;
         if (occupiedGrid[correctY][correctX] !== piece) {
           correctCount++;
@@ -218,7 +223,7 @@
     }
 
     function showPrize(amount) {
-      message.textContent = 🎉 Congratulations! You won ₹${amount}!;
+      message.textContent = `🎉 Congratulations! You won ₹${amount}!`;
       launchConfetti();
     }
 
@@ -231,7 +236,7 @@
           dx: (Math.random() - 0.5) * 4,
           dy: Math.random() * -5,
           size: Math.random() * 6 + 2,
-          color: hsl(${Math.random() * 360}, 100%, 50%)
+          color: `hsl(${Math.random() * 360}, 100%, 50%)`
         });
       }
 
