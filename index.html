@@ -3,14 +3,24 @@ import { motion } from "framer-motion";
 
 const PuzzleGame = () => {
   const [showWhiteScreen, setShowWhiteScreen] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
   const [showPuzzle, setShowPuzzle] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const whiteTimer = setTimeout(() => {
       setShowWhiteScreen(false);
-      setShowPuzzle(true);
+      setShowPreview(true);
     }, 2000);
-    return () => clearTimeout(timer);
+
+    const puzzleTimer = setTimeout(() => {
+      setShowPreview(false);
+      setShowPuzzle(true);
+    }, 4000);
+
+    return () => {
+      clearTimeout(whiteTimer);
+      clearTimeout(puzzleTimer);
+    };
   }, []);
 
   const containerStyle = {
@@ -28,7 +38,7 @@ const PuzzleGame = () => {
     position: "absolute",
     width: "200px",
     height: "200px",
-    backgroundImage: "url('/logo-puzzle.png')",
+    backgroundImage: "url('/logo.png')",
     backgroundSize: "cover",
     zIndex: 10,
   };
@@ -40,6 +50,7 @@ const PuzzleGame = () => {
     position: "absolute",
     cursor: "pointer",
     transition: "all 0.3s ease",
+    zIndex: 20,
   };
 
   const pieces = [
@@ -56,17 +67,18 @@ const PuzzleGame = () => {
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
           transition={{ duration: 0.5, delay: 1.5 }}
-          style={{ ...containerStyle, backgroundColor: "#fff", zIndex: 20 }}
+          style={{ ...containerStyle, backgroundColor: "#fff", zIndex: 30 }}
         ></motion.div>
       )}
 
-      {!showWhiteScreen && (
+      {showPreview && (
         <motion.div
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 1 }}
-          style={{ ...previewStyle }}
-        ></motion.div>
+          style={previewStyle}
+        />
       )}
 
       {showPuzzle &&
@@ -77,13 +89,13 @@ const PuzzleGame = () => {
               ...pieceStyle,
               top: piece.top,
               left: piece.left,
-              backgroundImage: "url('/logo-puzzle.png')",
+              backgroundImage: "url('/logo.png')",
               backgroundPosition: piece.backgroundPosition,
             }}
             whileHover={{ scale: 1.1 }}
             drag
             dragConstraints={{ left: 0, top: 0, right: 200, bottom: 200 }}
-          ></motion.div>
+          />
         ))}
     </div>
   );
