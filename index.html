@@ -2,221 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Puzzle Game</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f4f4f4;
       margin: 0;
       padding: 0;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
     }
-    h1 {
-      margin-top: 20px;
-    }
-    #puzzle-board {
-      width: 300px;
-      height: 300px;
-      margin: 20px auto;
-      border: 2px solid #333;
+    #puzzle {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 4px;
       position: relative;
-      background-image: url('https://via.placeholder.com/300');
-      background-size: cover;
     }
     .piece {
-      position: absolute;
-      background-image: url('https://via.placeholder.com/300');
+      width: 100px;
+      height: 100px;
       background-size: 300px 300px;
-      cursor: grab;
-      transition: box-shadow 0.3s ease;
+      position: absolute;
+      touch-action: none;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
     }
-    .highlight {
-      animation: fadeHighlight 0.5s ease-in-out;
+    .correct {
+      animation: highlight 0.5s ease-out;
+      pointer-events: none;
+      z-index: 0;
     }
-    @keyframes fadeHighlight {
-      0% { box-shadow: 0 0 10px 4px gold; transform: scale(1.1); }
-      100% { box-shadow: none; transform: scale(1); }
-    }
-    .shake {
-      animation: shake 0.3s ease-in-out;
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      50% { transform: translateX(5px); }
-      75% { transform: translateX(-5px); }
-    }
-    #timer {
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-    }
-    #prize-box {
-      display: none;
-      margin-top: 30px;
-      font-size: 22px;
-      background: #fff3cd;
-      padding: 20px;
-      border: 2px solid #ffecb5;
-      width: 280px;
-      margin-left: auto;
-      margin-right: auto;
+    @keyframes highlight {
+      0% { box-shadow: 0 0 10px 5px rgba(0,255,0,0.8); }
+      100% { box-shadow: none; }
     }
   </style>
 </head>
 <body>
-  <h1>Complete the Puzzle!</h1>
-  <div id="timer">30</div>
-  <div id="puzzle-board"></div>
-  <div id="prize-box">
-    <div id="points-earned"></div>
-  </div>
-
+  <div id="puzzle"></div>
   <script>
-    const puzzleBoard = document.getElementById("puzzle-board");
-    const size = 3;
-    const tileSize = 100;
-    let occupiedGrid = Array.from({ length: size }, () => Array(size).fill(null));
-    let gameOver = false;
-    let correctCount = 0;
-    let timeLeft = 30;
-    let interval;
+    const puzzle = document.getElementById('puzzle');
+    const imgURL = 'logo.png'; // Make sure this image is in the same folder
 
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+    const size = 100;
+    const gridSize = 3;
+    const pieces = [];
+
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        const piece = document.createElement('div');
+        piece.classList.add('piece');
+        piece.style.backgroundImage = `url(${imgURL})`;
+        piece.style.backgroundPosition = `-${x * size}px -${y * size}px`;
+        piece.dataset.correctX = x;
+        piece.dataset.correctY = y;
+        puzzle.appendChild(piece);
+        pieces.push(piece);
       }
     }
 
-    function createPuzzle() {
-      const pieces = [];
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          const piece = document.createElement("div");
-          piece.classList.add("piece");
-          piece.style.width = tileSize + "px";
-          piece.style.height = tileSize + "px";
-          piece.style.backgroundPosition = `-${x * tileSize}px -${y * tileSize}px`;
-          piece.dataset.correctX = x;
-          piece.dataset.correctY = y;
-          piece.dataset.locked = "false";
-          pieces.push(piece);
-        }
-      }
+    // Shuffle
+    pieces.forEach(piece => {
+      const randX = Math.floor(Math.random() * gridSize);
+      const randY = Math.floor(Math.random() * gridSize);
+      piece.style.left = `${randX * size}px`;
+      piece.style.top = `${randY * size}px`;
+    });
 
-      shuffleArray(pieces);
+    // Drag & Drop for mobile and desktop
+    let draggedPiece = null;
+    let offsetX = 0;
+    let offsetY = 0;
 
-      pieces.forEach(piece => {
-        piece.style.left = Math.random() * (300 - tileSize) + "px";
-        piece.style.top = Math.random() * (300 - tileSize) + "px";
-        piece.addEventListener("mousedown", dragStart);
-        piece.addEventListener("touchstart", dragStart, { passive: false });
-        puzzleBoard.appendChild(piece);
-      });
+    pieces.forEach(piece => {
+      const dragStart = (e) => {
+        draggedPiece = piece;
+        const rect = piece.getBoundingClientRect();
+        offsetX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        offsetY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        piece.style.zIndex = 10;
+      };
 
-      interval = setInterval(() => {
-        if (timeLeft > 0) {
-          timeLeft--;
-          document.getElementById("timer").innerText = timeLeft;
-        } else if (!gameOver) {
-          gameOver = true;
-          clearInterval(interval);
-          showPrize(0);
-        }
-      }, 1000);
-    }
+      const dragging = (e) => {
+        if (!draggedPiece) return;
+        e.preventDefault();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - offsetX;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - offsetY;
+        draggedPiece.style.left = `${x}px`;
+        draggedPiece.style.top = `${y}px`;
+      };
 
-    function dragStart(e) {
-      if (gameOver) return;
+      const dragEnd = () => {
+        if (!draggedPiece) return;
+        const x = Math.round(parseInt(draggedPiece.style.left) / size);
+        const y = Math.round(parseInt(draggedPiece.style.top) / size);
 
-      e.preventDefault();
-      const piece = e.target;
-      if (piece.dataset.locked === "true") return;
+        const correctX = parseInt(draggedPiece.dataset.correctX);
+        const correctY = parseInt(draggedPiece.dataset.correctY);
 
-      piece.style.zIndex = 1000;
-      const shiftX = (e.clientX || e.touches[0].clientX) - piece.offsetLeft;
-      const shiftY = (e.clientY || e.touches[0].clientY) - piece.offsetTop;
-
-      function moveAt(clientX, clientY) {
-        let newX = clientX - shiftX;
-        let newY = clientY - shiftY;
-
-        newX = Math.max(0, Math.min(300 - tileSize, newX));
-        newY = Math.max(0, Math.min(300 - tileSize, newY));
-
-        piece.style.left = newX + "px";
-        piece.style.top = newY + "px";
-      }
-
-      function onMove(e) {
-        moveAt(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
-      }
-
-      function onDrop() {
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onDrop);
-        document.removeEventListener("touchmove", onMove);
-        document.removeEventListener("touchend", onDrop);
-        checkPlacement(piece);
-      }
-
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onDrop);
-      document.addEventListener("touchmove", onMove);
-      document.addEventListener("touchend", onDrop);
-    }
-
-    function checkPlacement(piece) {
-      const correctX = parseInt(piece.dataset.correctX);
-      const correctY = parseInt(piece.dataset.correctY);
-      const targetX = correctX * tileSize;
-      const targetY = correctY * tileSize;
-      const deltaX = Math.abs(piece.offsetLeft - targetX);
-      const deltaY = Math.abs(piece.offsetTop - targetY);
-
-      if (deltaX < 15 && deltaY < 15) {
-        const existing = occupiedGrid[correctY][correctX];
-        if (existing && existing !== piece) {
-          existing.dataset.locked = "false";
-          existing.style.zIndex = 10;
-          existing.style.left = `${Math.random() * (300 - tileSize)}px`;
-          existing.style.top = `${Math.random() * (300 - tileSize)}px`;
+        if (x === correctX && y === correctY) {
+          draggedPiece.style.left = `${x * size}px`;
+          draggedPiece.style.top = `${y * size}px`;
+          draggedPiece.classList.add('correct');
+          draggedPiece.removeEventListener('mousedown', dragStart);
+          draggedPiece.removeEventListener('touchstart', dragStart);
+        } else {
+          draggedPiece.style.left = `${x * size}px`;
+          draggedPiece.style.top = `${y * size}px`;
         }
 
-        piece.style.left = `${targetX}px`;
-        piece.style.top = `${targetY}px`;
-        piece.style.zIndex = 1;
-        piece.dataset.locked = "true";
-        occupiedGrid[correctY][correctX] = piece;
+        draggedPiece.style.zIndex = 1;
+        draggedPiece = null;
+      };
 
-        // Highlight effect
-        piece.classList.add("highlight");
-        setTimeout(() => piece.classList.remove("highlight"), 500);
-
-        correctCount = occupiedGrid.flat().filter(p => p?.dataset.locked === "true").length;
-
-        if (correctCount === size * size && !gameOver) {
-          gameOver = true;
-          clearInterval(interval);
-          const reward = timeLeft > 20 ? 200 : timeLeft > 10 ? 100 : 50;
-          showPrize(reward);
-        }
-      } else {
-        piece.classList.add("shake");
-        setTimeout(() => piece.classList.remove("shake"), 300);
-      }
-    }
-
-    function showPrize(points) {
-      const prizeBox = document.getElementById("prize-box");
-      document.getElementById("points-earned").innerText = `You earned ${points} points!`;
-      prizeBox.style.display = "flex";
-      puzzleBoard.style.display = "none";
-    }
-
-    createPuzzle();
+      piece.addEventListener('mousedown', dragStart);
+      piece.addEventListener('touchstart', dragStart);
+      document.addEventListener('mousemove', dragging);
+      document.addEventListener('touchmove', dragging, { passive: false });
+      document.addEventListener('mouseup', dragEnd);
+      document.addEventListener('touchend', dragEnd);
+    });
   </script>
 </body>
 </html>
